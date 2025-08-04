@@ -69,6 +69,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch("/api/projects/:id", async (req, res) => {
+    try {
+      const data = insertProjectSchema.partial().parse(req.body);
+      const project = await storage.updateProject(req.params.id, data);
+      res.json(project);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update project" });
+    }
+  });
+
+  app.delete("/api/projects/:id", async (req, res) => {
+    try {
+      await storage.deleteProject(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete project" });
+    }
+  });
+
   // Banks routes
   app.get("/api/banks", async (req, res) => {
     try {
@@ -101,6 +123,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid data", errors: error.errors });
       }
       res.status(500).json({ message: "Failed to create bank" });
+    }
+  });
+
+  app.patch("/api/banks/:id", async (req, res) => {
+    try {
+      const data = insertBankSchema.partial().parse(req.body);
+      const bank = await storage.updateBank(req.params.id, data);
+      res.json(bank);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update bank" });
+    }
+  });
+
+  app.delete("/api/banks/:id", async (req, res) => {
+    try {
+      await storage.deleteBank(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete bank" });
     }
   });
 

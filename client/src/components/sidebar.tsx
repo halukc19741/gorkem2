@@ -3,11 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, ChevronRight, Building2, FolderOpen, ArrowRightLeft, Plus } from "lucide-react";
+import { ChevronDown, ChevronRight, Building2, FolderOpen, ArrowRightLeft, Plus, Settings } from "lucide-react";
 import { useCurrency } from "@/hooks/use-currency";
 import type { Project, Bank } from "@shared/schema";
 import AddProjectModal from "./add-project-modal";
 import AddBankModal from "./add-bank-modal";
+import ManageProjectsModal from "./manage-projects-modal";
+import ManageBanksModal from "./manage-banks-modal";
 
 interface SidebarProps {
   projects: Project[];
@@ -32,6 +34,8 @@ export default function Sidebar({
   const [isBanksExpanded, setIsBanksExpanded] = useState(true);
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [isBankModalOpen, setIsBankModalOpen] = useState(false);
+  const [isManageProjectsOpen, setIsManageProjectsOpen] = useState(false);
+  const [isManageBanksOpen, setIsManageBanksOpen] = useState(false);
   const { selectedCurrency, setSelectedCurrency, currencies } = useCurrency();
 
   const handleProjectChange = (projectId: string, checked: boolean) => {
@@ -100,8 +104,18 @@ export default function Sidebar({
               size="sm"
               onClick={() => setIsProjectModalOpen(true)}
               className="text-green-600 hover:text-green-700 hover:bg-green-50"
+              title="Yeni Proje Ekle"
             >
               <Plus className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsManageProjectsOpen(true)}
+              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+              title="Projeleri Yönet"
+            >
+              <Settings className="w-4 h-4" />
             </Button>
             <Button
               variant="ghost"
@@ -159,8 +173,18 @@ export default function Sidebar({
               size="sm"
               onClick={() => setIsBankModalOpen(true)}
               className="text-green-600 hover:text-green-700 hover:bg-green-50"
+              title="Yeni Banka Ekle"
             >
               <Plus className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsManageBanksOpen(true)}
+              className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+              title="Bankaları Yönet"
+            >
+              <Settings className="w-4 h-4" />
             </Button>
             <Button
               variant="ghost"
@@ -213,6 +237,14 @@ export default function Sidebar({
       <AddBankModal 
         open={isBankModalOpen} 
         onOpenChange={setIsBankModalOpen} 
+      />
+      <ManageProjectsModal 
+        open={isManageProjectsOpen} 
+        onOpenChange={setIsManageProjectsOpen} 
+      />
+      <ManageBanksModal 
+        open={isManageBanksOpen} 
+        onOpenChange={setIsManageBanksOpen} 
       />
     </div>
   );
