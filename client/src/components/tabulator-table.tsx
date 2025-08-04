@@ -89,6 +89,24 @@ export default function TabulatorTable({ data, selectedCurrency, exchangeRates, 
         formatter: (cell: any) => `%${parseFloat(cell.getValue() || '0').toFixed(2)}`
       },
       {
+        title: "Toplam Komisyon",
+        field: "totalCommission",
+        width: 130,
+        formatter: (cell: any) => {
+          const rowData = cell.getRow().getData();
+          const letterAmount = parseFloat(rowData.letterAmount || '0');
+          const commissionRate = parseFloat(rowData.commissionRate || '0');
+          const bsmvAndOtherCosts = parseFloat(rowData.bsmvAndOtherCosts || '0');
+          
+          const commissionAmount = (letterAmount * commissionRate) / 100;
+          const totalCommission = commissionAmount + bsmvAndOtherCosts;
+          
+          const currency = rowData.currency;
+          const convertedAmount = convertCurrency(totalCommission, currency);
+          return formatCurrency(convertedAmount, selectedCurrency);
+        }
+      },
+      {
         title: "Para Birimi",
         field: "currency",
         width: 80,

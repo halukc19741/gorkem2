@@ -46,6 +46,7 @@ export const guaranteeLetters = pgTable("guarantee_letters", {
   letterPercentage: decimal("letter_percentage", { precision: 5, scale: 2 }).notNull(),
   letterAmount: decimal("letter_amount", { precision: 15, scale: 2 }).notNull(),
   commissionRate: decimal("commission_rate", { precision: 5, scale: 2 }).notNull(),
+  bsmvAndOtherCosts: decimal("bsmv_and_other_costs", { precision: 15, scale: 2 }).default("0").notNull(),
   currency: text("currency").notNull(),
   purchaseDate: date("purchase_date").notNull(),
   letterDate: date("letter_date").notNull(),

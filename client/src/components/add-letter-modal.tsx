@@ -17,6 +17,7 @@ const formSchema = insertGuaranteeLetterSchema.extend({
   letterPercentage: z.string().transform(val => val.toString()),
   letterAmount: z.string().transform(val => val.toString()),
   commissionRate: z.string().transform(val => val.toString()),
+  bsmvAndOtherCosts: z.string().transform(val => val.toString()),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -47,6 +48,7 @@ export default function AddLetterModal({ open, onOpenChange }: AddLetterModalPro
       letterPercentage: "",
       letterAmount: "",
       commissionRate: "",
+      bsmvAndOtherCosts: "0",
       currency: "TRY",
       purchaseDate: "",
       letterDate: "",
@@ -276,6 +278,20 @@ export default function AddLetterModal({ open, onOpenChange }: AddLetterModalPro
                     <FormLabel>Komisyon Oranı (%)</FormLabel>
                     <FormControl>
                       <Input type="number" step="0.01" placeholder="1.50" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="bsmvAndOtherCosts"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>BSMV ve Diğer Masraflar</FormLabel>
+                    <FormControl>
+                      <Input type="number" step="0.01" placeholder="0.00" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
