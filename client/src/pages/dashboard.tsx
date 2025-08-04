@@ -5,6 +5,7 @@ import TabulatorTable from "@/components/tabulator-table";
 import Charts from "@/components/charts";
 import CurrencyConverterModal from "@/components/currency-converter-modal";
 import AddLetterModal from "@/components/add-letter-modal";
+import AddCreditModal from "@/components/add-credit-modal";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -28,9 +29,19 @@ import {
 export default function Dashboard() {
   const [isCurrencyModalOpen, setIsCurrencyModalOpen] = useState(false);
   const [isAddLetterModalOpen, setIsAddLetterModalOpen] = useState(false);
+  const [isAddCreditModalOpen, setIsAddCreditModalOpen] = useState(false);
   const [selectedProjects, setSelectedProjects] = useState<string[]>([]);
   const [selectedBanks, setSelectedBanks] = useState<string[]>([]);
   const { selectedCurrency, formatCurrency } = useCurrency();
+
+  // Mock exchange rates for now
+  const exchangeRates = {
+    TRY: 1,
+    USD: 32.5,
+    EUR: 35.2,
+    IQD: 0.0007,
+    GBP: 40.8,
+  };
 
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['/api/dashboard-stats'],
@@ -38,6 +49,10 @@ export default function Dashboard() {
 
   const { data: letters, isLoading: lettersLoading } = useQuery({
     queryKey: ['/api/guarantee-letters'],
+  });
+
+  const { data: credits, isLoading: creditsLoading } = useQuery({
+    queryKey: ['/api/credits'],
   });
 
   const { data: projects } = useQuery({
@@ -49,18 +64,18 @@ export default function Dashboard() {
   });
 
   const handleExportExcel = async () => {
-    if (letters) {
+    if (letters && Array.isArray(letters)) {
       await exportToExcel(letters, 'teminat-mektuplari.xlsx');
     }
   };
 
   const handleExportPDF = async () => {
-    if (letters) {
+    if (letters && Array.isArray(letters)) {
       await exportToPDF(letters, 'teminat-mektuplari.pdf');
     }
   };
 
-  if (statsLoading || lettersLoading) {
+  if (statsLoading || lettersLoading || creditsLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-lg">Yükleniyor...</div>
@@ -71,8 +86,8 @@ export default function Dashboard() {
   return (
     <div className="flex h-screen bg-gray-50">
       <Sidebar
-        projects={projects || []}
-        banks={banks || []}
+        projects={Array.isArray(projects) ? projects : []}
+        banks={Array.isArray(banks) ? banks : []}
         selectedProjects={selectedProjects}
         selectedBanks={selectedBanks}
         onProjectsChange={setSelectedProjects}
@@ -107,7 +122,7 @@ export default function Dashboard() {
         {/* Tab Navigation */}
         <div className="bg-white border-b border-gray-200">
           <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid w-full grid-cols-4 rounded-none border-b">
+            <TabsList className="grid w-full grid-cols-5 rounded-none border-b">
               <TabsTrigger value="overview" className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600">
                 <ChartPie className="w-4 h-4 mr-2" />
                 Genel Bakış
@@ -115,6 +130,10 @@ export default function Dashboard() {
               <TabsTrigger value="letters" className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600">
                 <Table className="w-4 h-4 mr-2" />
                 Mektup Listesi
+              </TabsTrigger>
+              <TabsTrigger value="credits" className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600">
+                <TrendingUp className="w-4 h-4 mr-2" />
+                Kullanılan Krediler
               </TabsTrigger>
               <TabsTrigger value="payments" className="rounded-none border-b-2 border-transparent data-[state=active]:border-blue-600 data-[state=active]:text-blue-600">
                 <Calendar className="w-4 h-4 mr-2" />
@@ -139,7 +158,7 @@ export default function Dashboard() {
                         </div>
                         <div className="ml-4">
                           <p className="text-sm font-medium text-gray-500">Toplam Mektup</p>
-                          <p className="text-2xl font-semibold text-gray-900">{stats?.totalLetters || 0}</p>
+                          <p className="text-2xl font-semibold text-gray-900">{(stats as any)?.totalLetters || 0}</p>
                         </div>
                       </div>
                     </CardContent>
@@ -154,7 +173,7 @@ export default function Dashboard() {
                         <div className="ml-4">
                           <p className="text-sm font-medium text-gray-500">Toplam Tutar</p>
                           <p className="text-2xl font-semibold text-gray-900">
-                            {formatCurrency(stats?.totalAmount || 0)}
+                            {formatCurrency((stats as any)?.totalLetterAmount || 0)}
                           </p>
                         </div>
                       </div>
@@ -169,7 +188,7 @@ export default function Dashboard() {
                         </div>
                         <div className="ml-4">
                           <p className="text-sm font-medium text-gray-500">Yaklaşan Ödemeler</p>
-                          <p className="text-2xl font-semibold text-gray-900">{stats?.upcomingPayments || 0}</p>
+                          <p className="text-2xl font-semibold text-gray-900">{(stats as any)?.upcomingPayments || 0}</p>
                         </div>
                       </div>
                     </CardContent>
@@ -183,7 +202,7 @@ export default function Dashboard() {
                         </div>
                         <div className="ml-4">
                           <p className="text-sm font-medium text-gray-500">Geciken Ödemeler</p>
-                          <p className="text-2xl font-semibold text-gray-900">{stats?.overduePayments || 0}</p>
+                          <p className="text-2xl font-semibold text-gray-900">{(stats as any)?.overduePayments || 0}</p>
                         </div>
                       </div>
                     </CardContent>
@@ -202,8 +221,29 @@ export default function Dashboard() {
                     </div>
                     <TabulatorTable 
                       data={letters || []} 
-                      selectedProjects={selectedProjects}
-                      selectedBanks={selectedBanks}
+                      selectedCurrency={selectedCurrency}
+                      exchangeRates={exchangeRates}
+                    />
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="credits">
+                <Card>
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <h3 className="text-lg font-semibold text-gray-800">Kullanılan Krediler</h3>
+                      <Button onClick={() => setIsAddCreditModalOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Yeni Kredi
+                      </Button>
+                    </div>
+
+                    <TabulatorTable 
+                      data={credits || []} 
+                      selectedCurrency={selectedCurrency}
+                      exchangeRates={exchangeRates}
+                      isCredits={true}
                     />
                   </CardContent>
                 </Card>
@@ -293,6 +333,11 @@ export default function Dashboard() {
       <AddLetterModal
         open={isAddLetterModalOpen}
         onOpenChange={setIsAddLetterModalOpen}
+      />
+
+      <AddCreditModal
+        open={isAddCreditModalOpen}
+        onOpenChange={setIsAddCreditModalOpen}
       />
     </div>
   );

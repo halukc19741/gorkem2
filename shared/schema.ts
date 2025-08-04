@@ -56,13 +56,31 @@ export const guaranteeLetters = pgTable("guarantee_letters", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const credits = pgTable("credits", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  bankId: uuid("bank_id").notNull().references(() => banks.id),
+  projectId: uuid("project_id").notNull().references(() => projects.id),
+  principalAmount: decimal("principal_amount", { precision: 15, scale: 2 }).notNull(),
+  interestAmount: decimal("interest_amount", { precision: 15, scale: 2 }).notNull(),
+  totalRepaidAmount: decimal("total_repaid_amount", { precision: 15, scale: 2 }).default("0").notNull(),
+  currency: text("currency").notNull(),
+  creditDate: date("credit_date").notNull(),
+  maturityDate: date("maturity_date").notNull(),
+  status: text("status").notNull().default("devam-ediyor"), // devam-ediyor, kapali, iptal
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Relations
 export const projectsRelations = relations(projects, ({ many }) => ({
   guaranteeLetters: many(guaranteeLetters),
+  credits: many(credits),
 }));
 
 export const banksRelations = relations(banks, ({ many }) => ({
   guaranteeLetters: many(guaranteeLetters),
+  credits: many(credits),
 }));
 
 export const guaranteeLettersRelations = relations(guaranteeLetters, ({ one }) => ({
@@ -72,6 +90,17 @@ export const guaranteeLettersRelations = relations(guaranteeLetters, ({ one }) =
   }),
   project: one(projects, {
     fields: [guaranteeLetters.projectId],
+    references: [projects.id],
+  }),
+}));
+
+export const creditsRelations = relations(credits, ({ one }) => ({
+  bank: one(banks, {
+    fields: [credits.bankId],
+    references: [banks.id],
+  }),
+  project: one(projects, {
+    fields: [credits.projectId],
     references: [projects.id],
   }),
 }));
@@ -102,6 +131,12 @@ export const insertGuaranteeLetterSchema = createInsertSchema(guaranteeLetters).
   updatedAt: true,
 });
 
+export const insertCreditSchema = createInsertSchema(credits).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type Project = typeof projects.$inferSelect;
 export type InsertProject = z.infer<typeof insertProjectSchema>;
@@ -118,8 +153,16 @@ export type InsertExchangeRate = z.infer<typeof insertExchangeRateSchema>;
 export type GuaranteeLetter = typeof guaranteeLetters.$inferSelect;
 export type InsertGuaranteeLetter = z.infer<typeof insertGuaranteeLetterSchema>;
 
+export type Credit = typeof credits.$inferSelect;
+export type InsertCredit = z.infer<typeof insertCreditSchema>;
+
 // Extended types with relations
 export type GuaranteeLetterWithRelations = GuaranteeLetter & {
-  bank: Bank;
-  project: Project;
+  bank: Bank | null;
+  project: Project | null;
+};
+
+export type CreditWithRelations = Credit & {
+  bank: Bank | null;
+  project: Project | null;
 };

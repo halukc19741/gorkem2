@@ -1,16 +1,17 @@
 import { useEffect, useRef } from "react";
 import { TabulatorFull as Tabulator } from "tabulator-tables";
-import type { GuaranteeLetterWithRelations } from "@shared/schema";
+import type { GuaranteeLetterWithRelations, CreditWithRelations } from "@shared/schema";
 import { useCurrency } from "@/hooks/use-currency";
 import "tabulator-tables/dist/css/tabulator.min.css";
 
 interface TabulatorTableProps {
-  data: GuaranteeLetterWithRelations[];
-  selectedProjects: string[];
-  selectedBanks: string[];
+  data: GuaranteeLetterWithRelations[] | CreditWithRelations[];
+  selectedCurrency: string;
+  exchangeRates: Record<string, number>;
+  isCredits?: boolean;
 }
 
-export default function TabulatorTable({ data, selectedProjects, selectedBanks }: TabulatorTableProps) {
+export default function TabulatorTable({ data, selectedCurrency, exchangeRates, isCredits = false }: TabulatorTableProps) {
   const tableRef = useRef<HTMLDivElement>(null);
   const tabulatorRef = useRef<Tabulator | null>(null);
   const { formatCurrency } = useCurrency();
@@ -18,30 +19,25 @@ export default function TabulatorTable({ data, selectedProjects, selectedBanks }
   useEffect(() => {
     if (!tableRef.current) return;
 
-    // Filter data based on selected projects and banks
-    let filteredData = data;
-    if (selectedProjects.length > 0) {
-      filteredData = filteredData.filter(item => 
-        selectedProjects.includes(item.projectId)
-      );
-    }
-    if (selectedBanks.length > 0) {
-      filteredData = filteredData.filter(item => 
-        selectedBanks.includes(item.bankId)
-      );
-    }
+    const convertCurrency = (amount: number, fromCurrency: string) => {
+      if (fromCurrency === selectedCurrency) return amount;
+      const amountInTRY = amount / (exchangeRates[fromCurrency] || 1);
+      return amountInTRY * (exchangeRates[selectedCurrency] || 1);
+    };
 
-    const columns = [
+    const guaranteeColumns = [
       {
         title: "Banka",
         field: "bank.name",
         width: 150,
         frozen: true,
+        formatter: (cell: any) => cell.getValue() || "Bilinmiyor"
       },
       {
         title: "Proje",
         field: "project.name",
         width: 150,
+        formatter: (cell: any) => cell.getValue() || "Bilinmiyor"
       },
       {
         title: "Mektup Türü",
@@ -65,7 +61,8 @@ export default function TabulatorTable({ data, selectedProjects, selectedBanks }
         formatter: (cell: any) => {
           const value = parseFloat(cell.getValue() || '0');
           const currency = cell.getRow().getData().currency;
-          return formatCurrency(value, currency);
+          const convertedAmount = convertCurrency(value, currency);
+          return formatCurrency(convertedAmount, selectedCurrency);
         }
       },
       {
@@ -81,7 +78,8 @@ export default function TabulatorTable({ data, selectedProjects, selectedBanks }
         formatter: (cell: any) => {
           const value = parseFloat(cell.getValue() || '0');
           const currency = cell.getRow().getData().currency;
-          return formatCurrency(value, currency);
+          const convertedAmount = convertCurrency(value, currency);
+          return formatCurrency(convertedAmount, selectedCurrency);
         }
       },
       {
@@ -151,13 +149,109 @@ export default function TabulatorTable({ data, selectedProjects, selectedBanks }
       }
     ];
 
+    const creditColumns = [
+      {
+        title: "Banka",
+        field: "bank.name",
+        width: 150,
+        frozen: true,
+        formatter: (cell: any) => cell.getValue() || "Bilinmiyor"
+      },
+      {
+        title: "Proje",
+        field: "project.name",
+        width: 150,
+        formatter: (cell: any) => cell.getValue() || "Bilinmiyor"
+      },
+      {
+        title: "Ana Para",
+        field: "principalAmount",
+        width: 130,
+        formatter: (cell: any) => {
+          const value = parseFloat(cell.getValue() || '0');
+          const currency = cell.getRow().getData().currency;
+          const convertedAmount = convertCurrency(value, currency);
+          return formatCurrency(convertedAmount, selectedCurrency);
+        }
+      },
+      {
+        title: "Faiz Tutarı",
+        field: "interestAmount",
+        width: 130,
+        formatter: (cell: any) => {
+          const value = parseFloat(cell.getValue() || '0');
+          const currency = cell.getRow().getData().currency;
+          const convertedAmount = convertCurrency(value, currency);
+          return formatCurrency(convertedAmount, selectedCurrency);
+        }
+      },
+      {
+        title: "Geri Ödenen",
+        field: "totalRepaidAmount",
+        width: 130,
+        formatter: (cell: any) => {
+          const value = parseFloat(cell.getValue() || '0');
+          const currency = cell.getRow().getData().currency;
+          const convertedAmount = convertCurrency(value, currency);
+          return formatCurrency(convertedAmount, selectedCurrency);
+        }
+      },
+      {
+        title: "Para Birimi",
+        field: "currency",
+        width: 80,
+      },
+      {
+        title: "Kredi Tarihi",
+        field: "creditDate",
+        width: 110,
+        formatter: (cell: any) => {
+          const date = new Date(cell.getValue());
+          return date.toLocaleDateString('tr-TR');
+        }
+      },
+      {
+        title: "Vade Tarihi",
+        field: "maturityDate",
+        width: 110,
+        formatter: (cell: any) => {
+          const date = new Date(cell.getValue());
+          return date.toLocaleDateString('tr-TR');
+        }
+      },
+      {
+        title: "Durum",
+        field: "status",
+        width: 100,
+        formatter: (cell: any) => {
+          const value = cell.getValue();
+          const creditStatusMap: { [key: string]: { text: string, class: string } } = {
+            'devam-ediyor': { text: 'Devam Ediyor', class: 'bg-green-100 text-green-800' },
+            'kapali': { text: 'Kapalı', class: 'bg-gray-100 text-gray-800' },
+            'iptal': { text: 'İptal', class: 'bg-red-100 text-red-800' }
+          };
+          const status = creditStatusMap[value] || { text: value, class: 'bg-gray-100 text-gray-800' };
+          return `<span class="px-2 py-1 rounded-full text-xs font-medium ${status.class}">${status.text}</span>`;
+        }
+      },
+      {
+        title: "Notlar",
+        field: "notes",
+        width: 200,
+        formatter: (cell: any) => {
+          const value = cell.getValue();
+          return value ? (value.length > 50 ? value.substring(0, 50) + '...' : value) : '-';
+        }
+      }
+    ];
+
     if (tabulatorRef.current) {
       tabulatorRef.current.destroy();
     }
 
     tabulatorRef.current = new Tabulator(tableRef.current, {
-      data: filteredData,
-      columns: columns,
+      data: data,
+      columns: isCredits ? creditColumns : guaranteeColumns,
       layout: "fitDataStretch",
       responsiveLayout: "hide",
       pagination: "local",
@@ -198,7 +292,7 @@ export default function TabulatorTable({ data, selectedProjects, selectedBanks }
         tabulatorRef.current = null;
       }
     };
-  }, [data, selectedProjects, selectedBanks, formatCurrency]);
+  }, [data, selectedCurrency, exchangeRates, isCredits, formatCurrency]);
 
   return (
     <div className="w-full">

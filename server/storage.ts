@@ -4,6 +4,7 @@ import {
   currencies, 
   exchangeRates, 
   guaranteeLetters,
+  credits,
   type Project,
   type InsertProject,
   type Bank,
@@ -14,7 +15,10 @@ import {
   type InsertExchangeRate,
   type GuaranteeLetter,
   type InsertGuaranteeLetter,
-  type GuaranteeLetterWithRelations
+  type GuaranteeLetterWithRelations,
+  type Credit,
+  type InsertCredit,
+  type CreditWithRelations
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, sql, desc, and } from "drizzle-orm";
@@ -53,6 +57,15 @@ export interface IStorage {
   deleteGuaranteeLetter(id: string): Promise<void>;
   getGuaranteeLettersByProject(projectId: string): Promise<GuaranteeLetterWithRelations[]>;
   getGuaranteeLettersByBank(bankId: string): Promise<GuaranteeLetterWithRelations[]>;
+
+  // Credits
+  getCredits(): Promise<CreditWithRelations[]>;
+  getCredit(id: string): Promise<CreditWithRelations | undefined>;
+  createCredit(credit: InsertCredit): Promise<Credit>;
+  updateCredit(id: string, credit: Partial<InsertCredit>): Promise<Credit>;
+  deleteCredit(id: string): Promise<void>;
+  getCreditsByProject(projectId: string): Promise<CreditWithRelations[]>;
+  getCreditsByBank(bankId: string): Promise<CreditWithRelations[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -303,6 +316,129 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(projects, eq(guaranteeLetters.projectId, projects.id))
       .where(eq(guaranteeLetters.bankId, bankId))
       .orderBy(desc(guaranteeLetters.createdAt));
+  }
+
+  // Credits
+  async getCredits(): Promise<CreditWithRelations[]> {
+    return await db
+      .select({
+        id: credits.id,
+        bankId: credits.bankId,
+        projectId: credits.projectId,
+        principalAmount: credits.principalAmount,
+        interestAmount: credits.interestAmount,
+        totalRepaidAmount: credits.totalRepaidAmount,
+        currency: credits.currency,
+        creditDate: credits.creditDate,
+        maturityDate: credits.maturityDate,
+        status: credits.status,
+        notes: credits.notes,
+        createdAt: credits.createdAt,
+        updatedAt: credits.updatedAt,
+        bank: banks,
+        project: projects,
+      })
+      .from(credits)
+      .leftJoin(banks, eq(credits.bankId, banks.id))
+      .leftJoin(projects, eq(credits.projectId, projects.id))
+      .orderBy(desc(credits.createdAt));
+  }
+
+  async getCredit(id: string): Promise<CreditWithRelations | undefined> {
+    const [credit] = await db
+      .select({
+        id: credits.id,
+        bankId: credits.bankId,
+        projectId: credits.projectId,
+        principalAmount: credits.principalAmount,
+        interestAmount: credits.interestAmount,
+        totalRepaidAmount: credits.totalRepaidAmount,
+        currency: credits.currency,
+        creditDate: credits.creditDate,
+        maturityDate: credits.maturityDate,
+        status: credits.status,
+        notes: credits.notes,
+        createdAt: credits.createdAt,
+        updatedAt: credits.updatedAt,
+        bank: banks,
+        project: projects,
+      })
+      .from(credits)
+      .leftJoin(banks, eq(credits.bankId, banks.id))
+      .leftJoin(projects, eq(credits.projectId, projects.id))
+      .where(eq(credits.id, id));
+    
+    return credit || undefined;
+  }
+
+  async createCredit(insertCredit: InsertCredit): Promise<Credit> {
+    const [credit] = await db.insert(credits).values(insertCredit).returning();
+    return credit;
+  }
+
+  async updateCredit(id: string, insertCredit: Partial<InsertCredit>): Promise<Credit> {
+    const [credit] = await db
+      .update(credits)
+      .set({ ...insertCredit, updatedAt: sql`now()` })
+      .where(eq(credits.id, id))
+      .returning();
+    return credit;
+  }
+
+  async deleteCredit(id: string): Promise<void> {
+    await db.delete(credits).where(eq(credits.id, id));
+  }
+
+  async getCreditsByProject(projectId: string): Promise<CreditWithRelations[]> {
+    return await db
+      .select({
+        id: credits.id,
+        bankId: credits.bankId,
+        projectId: credits.projectId,
+        principalAmount: credits.principalAmount,
+        interestAmount: credits.interestAmount,
+        totalRepaidAmount: credits.totalRepaidAmount,
+        currency: credits.currency,
+        creditDate: credits.creditDate,
+        maturityDate: credits.maturityDate,
+        status: credits.status,
+        notes: credits.notes,
+        createdAt: credits.createdAt,
+        updatedAt: credits.updatedAt,
+        bank: banks,
+        project: projects,
+      })
+      .from(credits)
+      .leftJoin(banks, eq(credits.bankId, banks.id))
+      .leftJoin(projects, eq(credits.projectId, projects.id))
+      .where(eq(credits.projectId, projectId))
+      .orderBy(desc(credits.createdAt));
+  }
+
+  async getCreditsByBank(bankId: string): Promise<CreditWithRelations[]> {
+    return await db
+      .select({
+        id: credits.id,
+        bankId: credits.bankId,
+        projectId: credits.projectId,
+        principalAmount: credits.principalAmount,
+        interestAmount: credits.interestAmount,
+        totalRepaidAmount: credits.totalRepaidAmount,
+        currency: credits.currency,
+        creditDate: credits.creditDate,
+        maturityDate: credits.maturityDate,
+        status: credits.status,
+        notes: credits.notes,
+        createdAt: credits.createdAt,
+        updatedAt: credits.updatedAt,
+        bank: banks,
+        project: projects,
+      })
+      .from(credits)
+      .leftJoin(banks, eq(credits.bankId, banks.id))
+      .leftJoin(projects, eq(credits.projectId, projects.id))
+      .where(eq(credits.bankId, bankId))
+      .orderBy(desc(credits.createdAt));
   }
 }
 

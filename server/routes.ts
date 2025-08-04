@@ -6,7 +6,8 @@ import {
   insertBankSchema,
   insertCurrencySchema,
   insertExchangeRateSchema,
-  insertGuaranteeLetterSchema
+  insertGuaranteeLetterSchema,
+  insertCreditSchema
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -238,42 +239,135 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Credits routes
+  app.get("/api/credits", async (req, res) => {
+    try {
+      const { projectId, bankId } = req.query;
+      
+      let credits;
+      if (projectId) {
+        credits = await storage.getCreditsByProject(projectId as string);
+      } else if (bankId) {
+        credits = await storage.getCreditsByBank(bankId as string);
+      } else {
+        credits = await storage.getCredits();
+      }
+      
+      res.json(credits);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch credits" });
+    }
+  });
+
+  app.get("/api/credits/:id", async (req, res) => {
+    try {
+      const credit = await storage.getCredit(req.params.id);
+      if (!credit) {
+        return res.status(404).json({ message: "Credit not found" });
+      }
+      res.json(credit);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch credit" });
+    }
+  });
+
+  app.post("/api/credits", async (req, res) => {
+    try {
+      const data = insertCreditSchema.parse(req.body);
+      const credit = await storage.createCredit(data);
+      res.status(201).json(credit);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create credit" });
+    }
+  });
+
+  app.patch("/api/credits/:id", async (req, res) => {
+    try {
+      const data = insertCreditSchema.partial().parse(req.body);
+      const credit = await storage.updateCredit(req.params.id, data);
+      res.json(credit);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update credit" });
+    }
+  });
+
+  app.delete("/api/credits/:id", async (req, res) => {
+    try {
+      await storage.deleteCredit(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete credit" });
+    }
+  });
+
   // Statistics routes
   app.get("/api/dashboard-stats", async (req, res) => {
     try {
       const letters = await storage.getGuaranteeLetters();
+      const credits = await storage.getCredits();
       const projects = await storage.getProjects();
       const banks = await storage.getBanks();
 
       const totalLetters = letters.length;
       const activeLetters = letters.filter(l => l.status === 'aktif').length;
-      const totalAmount = letters.reduce((sum, letter) => {
+      const totalLetterAmount = letters.reduce((sum, letter) => {
         return sum + parseFloat(letter.letterAmount || '0');
+      }, 0);
+
+      const totalCredits = credits.length;
+      const activeCredits = credits.filter(c => c.status === 'devam-ediyor').length;
+      const totalCreditAmount = credits.reduce((sum, credit) => {
+        return sum + parseFloat(credit.principalAmount || '0') + parseFloat(credit.interestAmount || '0');
+      }, 0);
+      const totalRepaidAmount = credits.reduce((sum, credit) => {
+        return sum + parseFloat(credit.totalRepaidAmount || '0');
       }, 0);
 
       // Get upcoming payments (letters expiring in next 30 days)
       const today = new Date();
       const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
       
-      const upcomingPayments = letters.filter(letter => {
+      const upcomingLetterPayments = letters.filter(letter => {
         if (!letter.expiryDate) return false;
         const expiryDate = new Date(letter.expiryDate);
         return expiryDate >= today && expiryDate <= thirtyDaysFromNow;
       }).length;
 
+      const upcomingCreditPayments = credits.filter(credit => {
+        const maturityDate = new Date(credit.maturityDate);
+        return maturityDate >= today && maturityDate <= thirtyDaysFromNow && credit.status === 'devam-ediyor';
+      }).length;
+
       // Get overdue payments
-      const overduePayments = letters.filter(letter => {
+      const overdueLetterPayments = letters.filter(letter => {
         if (!letter.expiryDate) return false;
         const expiryDate = new Date(letter.expiryDate);
         return expiryDate < today && letter.status === 'aktif';
       }).length;
 
+      const overdueCreditPayments = credits.filter(credit => {
+        const maturityDate = new Date(credit.maturityDate);
+        return maturityDate < today && credit.status === 'devam-ediyor';
+      }).length;
+
       res.json({
         totalLetters,
         activeLetters,
-        totalAmount,
-        upcomingPayments,
-        overduePayments,
+        totalLetterAmount,
+        totalCredits,
+        activeCredits,
+        totalCreditAmount,
+        totalRepaidAmount,
+        upcomingLetterPayments,
+        upcomingCreditPayments,
+        overdueLetterPayments,
+        overdueCreditPayments,
         totalProjects: projects.length,
         totalBanks: banks.length,
       });
