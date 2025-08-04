@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Sidebar from "@/components/sidebar";
 import TabulatorTable from "@/components/tabulator-table";
+import { apiRequest } from "@/lib/queryClient";
 import Charts from "@/components/charts";
 import CurrencyConverterModal from "@/components/currency-converter-modal";
 import AddLetterModal from "@/components/add-letter-modal";
@@ -43,24 +44,79 @@ export default function Dashboard() {
     GBP: 40.8,
   };
 
-  const { data: stats, isLoading: statsLoading } = useQuery({
+  const { data: stats, isLoading: statsLoading, error: statsError } = useQuery({
     queryKey: ['/api/dashboard-stats'],
+    queryFn: async () => {
+      try {
+        const res = await apiRequest('GET', '/api/dashboard-stats');
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const data = await res.json();
+        return data;
+      } catch (error) {
+        console.error('Dashboard stats error:', error);
+        throw error;
+      }
+    }
   });
 
-  const { data: letters, isLoading: lettersLoading } = useQuery({
+  const { data: letters, isLoading: lettersLoading, error: lettersError } = useQuery({
     queryKey: ['/api/guarantee-letters'],
+    queryFn: async () => {
+      try {
+        const res = await apiRequest('GET', '/api/guarantee-letters');
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const data = await res.json();
+        return data;
+      } catch (error) {
+        console.error('Guarantee letters error:', error);
+        throw error;
+      }
+    }
   });
 
-  const { data: credits, isLoading: creditsLoading } = useQuery({
+  const { data: credits, isLoading: creditsLoading, error: creditsError } = useQuery({
     queryKey: ['/api/credits'],
+    queryFn: async () => {
+      try {
+        const res = await apiRequest('GET', '/api/credits');
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const data = await res.json();
+        return data;
+      } catch (error) {
+        console.error('Credits error:', error);
+        throw error;
+      }
+    }
   });
 
-  const { data: projects } = useQuery({
+  const { data: projects, error: projectsError } = useQuery({
     queryKey: ['/api/projects'],
+    queryFn: async () => {
+      try {
+        const res = await apiRequest('GET', '/api/projects');
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const data = await res.json();
+        return data;
+      } catch (error) {
+        console.error('Projects error:', error);
+        throw error;
+      }
+    }
   });
 
-  const { data: banks } = useQuery({
+  const { data: banks, error: banksError } = useQuery({
     queryKey: ['/api/banks'],
+    queryFn: async () => {
+      try {
+        const res = await apiRequest('GET', '/api/banks');
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const data = await res.json();
+        return data;
+      } catch (error) {
+        console.error('Banks error:', error);
+        throw error;
+      }
+    }
   });
 
   const handleExportExcel = async () => {
@@ -75,6 +131,24 @@ export default function Dashboard() {
     }
   };
 
+  // Hata durumlarını kontrol edelim
+  const errors = [statsError, lettersError, creditsError, projectsError, banksError].filter(Boolean);
+  if (errors.length > 0) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-lg text-red-600">
+          <h2 className="font-bold mb-2">Hata Oluştu:</h2>
+          {errors.map((error: any, index) => (
+            <div key={index} className="mb-1">
+              {error.message || 'Beklenmeyen bir hata oluştu'}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Yükleme durumunu kontrol edelim
   if (statsLoading || lettersLoading || creditsLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -107,10 +181,6 @@ export default function Dashboard() {
               </Badge>
             </div>
             <div className="flex items-center space-x-3">
-              <Button onClick={() => setIsAddLetterModalOpen(true)} className="bg-blue-600 hover:bg-blue-700">
-                <Plus className="w-4 h-4 mr-2" />
-                Yeni Mektup
-              </Button>
               <Button variant="outline" onClick={handleExportExcel} className="bg-green-600 text-white hover:bg-green-700">
                 <Download className="w-4 h-4 mr-2" />
                 Dışa Aktar
@@ -218,6 +288,10 @@ export default function Dashboard() {
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-6">
                       <h3 className="text-lg font-semibold text-gray-800">Teminat Mektupları</h3>
+                      <Button onClick={() => setIsAddLetterModalOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+                        <Plus className="w-4 h-4 mr-2" />
+                        Yeni Mektup
+                      </Button>
                     </div>
                     <TabulatorTable 
                       data={letters || []} 
@@ -270,25 +344,25 @@ export default function Dashboard() {
                       <CardContent className="p-6">
                         <h3 className="text-lg font-semibold text-gray-800 mb-4">Yaklaşan Ödemeler</h3>
                         <div className="space-y-3">
-                          {letters?.filter(letter => {
+                          {letters?.filter((letter: { expiryDate: string | null }) => {
                             if (!letter.expiryDate) return false;
                             const expiryDate = new Date(letter.expiryDate);
                             const today = new Date();
                             const thirtyDaysFromNow = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000);
                             return expiryDate >= today && expiryDate <= thirtyDaysFromNow;
-                          }).map(payment => (
-                            <div key={payment.id} className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                          }).map((letter: any) => (
+                            <div key={letter.id} className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                               <div className="flex items-center justify-between">
-                                <span className="text-sm font-medium text-gray-900">{payment.bank?.name}</span>
+                                <span className="text-sm font-medium text-gray-900">{letter.bank?.name}</span>
                                 <Badge variant="outline" className="text-yellow-700 bg-yellow-100">
-                                  {payment.expiryDate ? 
-                                    Math.ceil((new Date(payment.expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0
+                                  {letter.expiryDate ? 
+                                    Math.ceil((new Date(letter.expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)) : 0
                                   } gün
                                 </Badge>
                               </div>
-                              <p className="text-xs text-gray-600 mt-1">{payment.project?.name}</p>
+                              <p className="text-xs text-gray-600 mt-1">{letter.project?.name}</p>
                               <p className="text-sm font-semibold text-gray-900 mt-1">
-                                {formatCurrency(parseFloat(payment.letterAmount || '0'))}
+                                {formatCurrency(parseFloat(letter.letterAmount || '0'))}
                               </p>
                             </div>
                           ))}

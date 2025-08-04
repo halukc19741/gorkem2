@@ -1,73 +1,73 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, decimal, date, timestamp, uuid, boolean } from "drizzle-orm/pg-core";
+import { mysqlTable, text, varchar, decimal, date, timestamp, int, boolean } from "drizzle-orm/mysql-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const projects = pgTable("projects", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  name: text("name").notNull(),
+export const projects = mysqlTable("projects", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  name: varchar("name", { length: 255 }).notNull(),
   description: text("description"),
-  status: text("status").notNull().default("active"),
+  status: varchar("status", { length: 50 }).notNull().default("active"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const banks = pgTable("banks", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  name: text("name").notNull(),
-  code: text("code"),
+export const banks = mysqlTable("banks", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  name: varchar("name", { length: 255 }).notNull(),
+  code: varchar("code", { length: 50 }),
   contactInfo: text("contact_info"),
-  status: text("status").notNull().default("active"),
+  status: varchar("status", { length: 50 }).notNull().default("active"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const currencies = pgTable("currencies", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  code: text("code").notNull().unique(),
-  name: text("name").notNull(),
-  symbol: text("symbol"),
+export const currencies = mysqlTable("currencies", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  code: varchar("code", { length: 3 }).notNull().unique(),
+  name: varchar("name", { length: 255 }).notNull(),
+  symbol: varchar("symbol", { length: 10 }),
   isActive: boolean("is_active").default(true),
 });
 
-export const exchangeRates = pgTable("exchange_rates", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  fromCurrency: text("from_currency").notNull(),
-  toCurrency: text("to_currency").notNull(),
+export const exchangeRates = mysqlTable("exchange_rates", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  fromCurrency: varchar("from_currency", { length: 3 }).notNull(),
+  toCurrency: varchar("to_currency", { length: 3 }).notNull(),
   rate: decimal("rate", { precision: 12, scale: 6 }).notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const guaranteeLetters = pgTable("guarantee_letters", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  bankId: uuid("bank_id").notNull().references(() => banks.id),
-  projectId: uuid("project_id").notNull().references(() => projects.id),
-  letterType: text("letter_type").notNull(), // teminat, avans, kesin-teminat, gecici-teminat
+export const guaranteeLetters = mysqlTable("guarantee_letters", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  bankId: varchar("bank_id", { length: 36 }).notNull().references(() => banks.id),
+  projectId: varchar("project_id", { length: 36 }).notNull().references(() => projects.id),
+  letterType: varchar("letter_type", { length: 50 }).notNull(), // teminat, avans, kesin-teminat, gecici-teminat
   contractAmount: decimal("contract_amount", { precision: 15, scale: 2 }).notNull(),
   letterPercentage: decimal("letter_percentage", { precision: 5, scale: 2 }).notNull(),
   letterAmount: decimal("letter_amount", { precision: 15, scale: 2 }).notNull(),
   commissionRate: decimal("commission_rate", { precision: 5, scale: 2 }).notNull(),
   bsmvAndOtherCosts: decimal("bsmv_and_other_costs", { precision: 15, scale: 2 }).default("0").notNull(),
-  currency: text("currency").notNull(),
+  currency: varchar("currency", { length: 3 }).notNull(),
   purchaseDate: date("purchase_date").notNull(),
   letterDate: date("letter_date").notNull(),
   expiryDate: date("expiry_date"),
-  status: text("status").notNull().default("aktif"), // aktif, beklemede, kapali, iptal
+  status: varchar("status", { length: 50 }).notNull().default("aktif"), // aktif, beklemede, kapali, iptal
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-export const credits = pgTable("credits", {
-  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
-  bankId: uuid("bank_id").notNull().references(() => banks.id),
-  projectId: uuid("project_id").notNull().references(() => projects.id),
+export const credits = mysqlTable("credits", {
+  id: varchar("id", { length: 36 }).primaryKey().default(sql`(UUID())`),
+  bankId: varchar("bank_id", { length: 36 }).notNull().references(() => banks.id),
+  projectId: varchar("project_id", { length: 36 }).notNull().references(() => projects.id),
   principalAmount: decimal("principal_amount", { precision: 15, scale: 2 }).notNull(),
   interestAmount: decimal("interest_amount", { precision: 15, scale: 2 }).notNull(),
   totalRepaidAmount: decimal("total_repaid_amount", { precision: 15, scale: 2 }).default("0").notNull(),
-  currency: text("currency").notNull(),
+  currency: varchar("currency", { length: 3 }).notNull(),
   creditDate: date("credit_date").notNull(),
   maturityDate: date("maturity_date").notNull(),
-  status: text("status").notNull().default("devam-ediyor"), // devam-ediyor, kapali, iptal
+  status: varchar("status", { length: 50 }).notNull().default("devam-ediyor"), // devam-ediyor, kapali, iptal
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

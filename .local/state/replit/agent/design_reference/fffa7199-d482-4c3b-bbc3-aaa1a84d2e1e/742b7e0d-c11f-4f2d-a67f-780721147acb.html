@@ -1,0 +1,768 @@
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kredi ve Teminat Mektubu Takip Sistemi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#1976D2',
+                        secondary: '#424242',
+                        accent: '#FF9800',
+                        success: '#4CAF50',
+                        warning: '#FF9800',
+                        error: '#F44336'
+                    },
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/tabulator-tables@5.5.0/dist/css/tabulator.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/tabulator-tables@5.5.0/dist/js/tabulator.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-50 font-inter">
+    <!-- @COMPONENT: MainLayout -->
+    <div class="flex h-screen">
+        <!-- @COMPONENT: Sidebar -->
+        <div class="w-80 bg-white shadow-lg border-r border-gray-200 overflow-y-auto">
+            <!-- Header -->
+            <div class="p-6 border-b border-gray-200">
+                <h1 class="text-xl font-semibold text-gray-800">Teminat Mektubu Takip</h1>
+                <p class="text-sm text-gray-500 mt-1">Kredi ve Teminat Yönetimi</p>
+            </div>
+
+            <!-- Currency Converter -->
+            <div class="p-4 border-b border-gray-200 bg-blue-50">
+                <h3 class="font-medium text-gray-700 mb-3">
+                    <i class="fas fa-exchange-alt mr-2"></i>Kur Çevirici
+                </h3>
+                <div class="space-y-2">
+                    <select class="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="selectedCurrency">
+                        <option value="TRY">TRY - Türk Lirası</option>
+                        <option value="USD">USD - Amerikan Doları</option>
+                        <option value="EUR">EUR - Euro</option>
+                        <option value="IQD">IQD - Irak Dinarı</option>
+                        <option value="GBP">GBP - İngiliz Sterlini</option>
+                    </select>
+                    <button class="w-full bg-primary text-white py-2 rounded-md text-sm hover:bg-blue-700 transition-colors" data-event="click:openCurrencyConverter">
+                        Kur Katsayıları Düzenle
+                    </button>
+                </div>
+            </div>
+
+            <!-- Projects Section -->
+            <div class="p-4 border-b border-gray-200">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-medium text-gray-700">
+                        <i class="fas fa-project-diagram mr-2"></i>Projeler
+                    </h3>
+                    <button class="text-primary hover:text-blue-700" data-event="click:toggleProjects">
+                        <i class="fas fa-chevron-down" id="projectsChevron"></i>
+                    </button>
+                </div>
+                <div id="projectsList" class="space-y-2">
+                    <!-- @MAP: projects.map(project => ( -->
+                    <div class="flex items-center">
+                        <input type="checkbox" class="mr-2 text-primary" data-bind="project.selected" data-mock="true">
+                        <span class="text-sm text-gray-600" data-bind="project.name">Irak Petrol Projesi</span>
+                        <span class="ml-auto text-xs bg-gray-100 px-2 py-1 rounded" data-bind="project.letterCount">12</span>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" class="mr-2 text-primary" data-bind="project.selected" data-mock="true">
+                        <span class="text-sm text-gray-600" data-bind="project.name">Türkiye İnşaat Projesi</span>
+                        <span class="ml-auto text-xs bg-gray-100 px-2 py-1 rounded" data-bind="project.letterCount">8</span>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" class="mr-2 text-primary" data-bind="project.selected" data-mock="true">
+                        <span class="text-sm text-gray-600" data-bind="project.name">Katar Altyapı Projesi</span>
+                        <span class="ml-auto text-xs bg-gray-100 px-2 py-1 rounded" data-bind="project.letterCount">5</span>
+                    </div>
+                    <!-- @END_MAP )) -->
+                </div>
+            </div>
+
+            <!-- Banks Section -->
+            <div class="p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-medium text-gray-700">
+                        <i class="fas fa-university mr-2"></i>Bankalar
+                    </h3>
+                    <button class="text-primary hover:text-blue-700" data-event="click:toggleBanks">
+                        <i class="fas fa-chevron-down" id="banksChevron"></i>
+                    </button>
+                </div>
+                <div id="banksList" class="space-y-2">
+                    <!-- @MAP: banks.map(bank => ( -->
+                    <div class="flex items-center">
+                        <input type="checkbox" class="mr-2 text-primary" data-bind="bank.selected" data-mock="true">
+                        <span class="text-sm text-gray-600" data-bind="bank.name">Türkiye İş Bankası</span>
+                        <span class="ml-auto text-xs bg-gray-100 px-2 py-1 rounded" data-bind="bank.letterCount">15</span>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" class="mr-2 text-primary" data-bind="bank.selected" data-mock="true">
+                        <span class="text-sm text-gray-600" data-bind="bank.name">Garanti BBVA</span>
+                        <span class="ml-auto text-xs bg-gray-100 px-2 py-1 rounded" data-bind="bank.letterCount">10</span>
+                    </div>
+                    <div class="flex items-center">
+                        <input type="checkbox" class="mr-2 text-primary" data-bind="bank.selected" data-mock="true">
+                        <span class="text-sm text-gray-600" data-bind="bank.name">Yapı Kredi Bankası</span>
+                        <span class="ml-auto text-xs bg-gray-100 px-2 py-1 rounded" data-bind="bank.letterCount">7</span>
+                    </div>
+                    <!-- @END_MAP )) -->
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: Sidebar -->
+
+        <!-- @COMPONENT: MainContent -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Top Navigation Bar -->
+            <div class="bg-white shadow-sm border-b border-gray-200 p-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <h2 class="text-2xl font-semibold text-gray-800">Dashboard</h2>
+                        <div class="flex items-center bg-blue-50 px-3 py-1 rounded-full">
+                            <i class="fas fa-globe-americas text-primary mr-2"></i>
+                            <span class="text-sm font-medium text-primary" data-bind="activeCurrency">TRY</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <button class="bg-primary text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors" data-event="click:addNewLetter">
+                            <i class="fas fa-plus mr-2"></i>Yeni Mektup
+                        </button>
+                        <button class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors" data-event="click:exportData">
+                            <i class="fas fa-download mr-2"></i>Dışa Aktar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="bg-white border-b border-gray-200">
+                <nav class="flex space-x-8 px-6" role="tablist">
+                    <button class="py-4 px-1 border-b-2 border-primary text-primary font-medium text-sm" data-tab="overview" data-event="click:switchTab">
+                        <i class="fas fa-chart-pie mr-2"></i>Genel Bakış
+                    </button>
+                    <button class="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm" data-tab="letters" data-event="click:switchTab">
+                        <i class="fas fa-table mr-2"></i>Mektup Listesi
+                    </button>
+                    <button class="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm" data-tab="payments" data-event="click:switchTab">
+                        <i class="fas fa-calendar-alt mr-2"></i>Ödeme Takvimi
+                    </button>
+                    <button class="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 font-medium text-sm" data-tab="reports" data-event="click:switchTab">
+                        <i class="fas fa-chart-bar mr-2"></i>Raporlar
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="flex-1 overflow-y-auto p-6">
+                <!-- @COMPONENT: OverviewTab -->
+                <div id="overviewTab" class="tab-content">
+                    <!-- Summary Cards -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <div class="flex items-center">
+                                <div class="p-3 rounded-full bg-blue-100">
+                                    <i class="fas fa-file-contract text-primary text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-500">Toplam Mektup</p>
+                                    <p class="text-2xl font-semibold text-gray-900" data-bind="totalLetters">25</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <div class="flex items-center">
+                                <div class="p-3 rounded-full bg-green-100">
+                                    <i class="fas fa-money-bill-wave text-success text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-500">Toplam Tutar</p>
+                                    <p class="text-2xl font-semibold text-gray-900" data-bind="totalAmount">2,450,000 ₺</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <div class="flex items-center">
+                                <div class="p-3 rounded-full bg-yellow-100">
+                                    <i class="fas fa-clock text-warning text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-500">Yaklaşan Ödemeler</p>
+                                    <p class="text-2xl font-semibold text-gray-900" data-bind="upcomingPayments">8</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <div class="flex items-center">
+                                <div class="p-3 rounded-full bg-red-100">
+                                    <i class="fas fa-exclamation-triangle text-error text-xl"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <p class="text-sm font-medium text-gray-500">Geciken Ödemeler</p>
+                                    <p class="text-2xl font-semibold text-gray-900" data-bind="overduePayments">2</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Row -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Mektup Türlerine Göre Dağılım</h3>
+                            <canvas id="letterTypeChart" width="400" height="300"></canvas>
+                        </div>
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Bankalara Göre Dağılım</h3>
+                            <canvas id="bankDistributionChart" width="400" height="300"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Son Aktiviteler</h3>
+                        <div class="space-y-4">
+                            <!-- @MAP: recentActivities.map(activity => ( -->
+                            <div class="flex items-center p-3 bg-gray-50 rounded-lg" data-mock="true">
+                                <div class="p-2 bg-blue-100 rounded-full">
+                                    <i class="fas fa-plus text-primary"></i>
+                                </div>
+                                <div class="ml-4 flex-1">
+                                    <p class="text-sm font-medium text-gray-900" data-bind="activity.description">Yeni teminat mektubu eklendi</p>
+                                    <p class="text-xs text-gray-500" data-bind="activity.timestamp">2 saat önce</p>
+                                </div>
+                                <span class="text-sm font-medium text-primary" data-bind="activity.amount">450,000 ₺</span>
+                            </div>
+                            <!-- @END_MAP )) -->
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: OverviewTab -->
+
+                <!-- @COMPONENT: LettersTab -->
+                <div id="lettersTab" class="tab-content hidden">
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-semibold text-gray-800">Teminat Mektupları</h3>
+                                <div class="flex items-center space-x-3">
+                                    <input type="text" placeholder="Ara..." class="px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" data-event="input:filterTable">
+                                    <button class="bg-gray-100 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-200 transition-colors" data-event="click:refreshTable">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-6">
+                            <!-- @FUNCTIONALITY: This table should implement Tabulator.js with editable cells and Excel-like functionality -->
+                            <div id="lettersTable" data-implementation="Tabulator table with all letter data fields"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: LettersTab -->
+
+                <!-- @COMPONENT: PaymentsTab -->
+                <div id="paymentsTab" class="tab-content hidden">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2">
+                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4">Ödeme Takvimi</h3>
+                                <!-- @FUNCTIONALITY: Calendar component showing payment due dates -->
+                                <div id="paymentCalendar" class="h-96 border border-gray-200 rounded-lg" data-implementation="Calendar view with payment indicators"></div>
+                            </div>
+                        </div>
+                        <div class="space-y-6">
+                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4">Yaklaşan Ödemeler</h3>
+                                <div class="space-y-3">
+                                    <!-- @MAP: upcomingPayments.map(payment => ( -->
+                                    <div class="p-3 bg-yellow-50 border border-yellow-200 rounded-lg" data-mock="true">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-sm font-medium text-gray-900" data-bind="payment.bank">Türkiye İş Bankası</span>
+                                            <span class="text-xs text-yellow-700 bg-yellow-100 px-2 py-1 rounded" data-bind="payment.daysLeft">3 gün</span>
+                                        </div>
+                                        <p class="text-xs text-gray-600 mt-1" data-bind="payment.project">Irak Petrol Projesi</p>
+                                        <p class="text-sm font-semibold text-gray-900 mt-1" data-bind="payment.amount">125,000 ₺</p>
+                                    </div>
+                                    <!-- @END_MAP )) -->
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4">Geciken Ödemeler</h3>
+                                <div class="space-y-3">
+                                    <!-- @MAP: overduePayments.map(payment => ( -->
+                                    <div class="p-3 bg-red-50 border border-red-200 rounded-lg" data-mock="true">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-sm font-medium text-gray-900" data-bind="payment.bank">Garanti BBVA</span>
+                                            <span class="text-xs text-red-700 bg-red-100 px-2 py-1 rounded" data-bind="payment.overdueDays">5 gün gecikme</span>
+                                        </div>
+                                        <p class="text-xs text-gray-600 mt-1" data-bind="payment.project">Katar Altyapı Projesi</p>
+                                        <p class="text-sm font-semibold text-gray-900 mt-1" data-bind="payment.amount">85,000 ₺</p>
+                                    </div>
+                                    <!-- @END_MAP )) -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: PaymentsTab -->
+
+                <!-- @COMPONENT: ReportsTab -->
+                <div id="reportsTab" class="tab-content hidden">
+                    <div class="space-y-6">
+                        <!-- Report Controls -->
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Rapor Filtreleri</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Başlangıç Tarihi</label>
+                                    <input type="date" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="reportStartDate">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Bitiş Tarihi</label>
+                                    <input type="date" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="reportEndDate">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Rapor Türü</label>
+                                    <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="reportType">
+                                        <option value="summary">Özet Raporu</option>
+                                        <option value="detailed">Detaylı Rapor</option>
+                                        <option value="bank">Banka Bazlı</option>
+                                        <option value="project">Proje Bazlı</option>
+                                    </select>
+                                </div>
+                                <div class="flex items-end">
+                                    <button class="w-full bg-primary text-white py-2 rounded-md hover:bg-blue-700 transition-colors" data-event="click:generateReport">
+                                        Rapor Oluştur
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Report Visualizations -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4">Aylık Trend Analizi</h3>
+                                <canvas id="monthlyTrendChart" width="400" height="300"></canvas>
+                            </div>
+                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4">Risk Analizi</h3>
+                                <canvas id="riskAnalysisChart" width="400" height="300"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Export Options -->
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Dışa Aktarma Seçenekleri</h3>
+                            <div class="flex items-center space-x-4">
+                                <button class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors" data-event="click:exportExcel">
+                                    <i class="fas fa-file-excel mr-2"></i>Excel Olarak İndir
+                                </button>
+                                <button class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors" data-event="click:exportPDF">
+                                    <i class="fas fa-file-pdf mr-2"></i>PDF Olarak İndir
+                                </button>
+                                <button class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors" data-event="click:exportCSV">
+                                    <i class="fas fa-file-csv mr-2"></i>CSV Olarak İndir
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: ReportsTab -->
+            </div>
+        </div>
+        <!-- @END_COMPONENT: MainContent -->
+    </div>
+
+    <!-- @COMPONENT: CurrencyConverterModal -->
+    <div id="currencyModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50" data-modal="currencyConverter">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl mx-4">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-800">Kur Katsayıları Yönetimi</h3>
+                <button class="text-gray-400 hover:text-gray-600" data-event="click:closeCurrencyModal">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Kaynak Para Birimi</label>
+                        <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="sourceCurrency">
+                            <option value="TRY">TRY - Türk Lirası</option>
+                            <option value="USD">USD - Amerikan Doları</option>
+                            <option value="EUR">EUR - Euro</option>
+                            <option value="IQD">IQD - Irak Dinarı</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Hedef Para Birimi</label>
+                        <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="targetCurrency">
+                            <option value="TRY">TRY - Türk Lirası</option>
+                            <option value="USD">USD - Amerikan Doları</option>
+                            <option value="EUR">EUR - Euro</option>
+                            <option value="IQD">IQD - Irak Dinarı</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Katsayı</label>
+                        <input type="number" step="0.0001" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="exchangeRate" placeholder="1.0000">
+                    </div>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <h4 class="font-medium text-gray-700 mb-3">Mevcut Kur Katsayıları</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <!-- @MAP: exchangeRates.map(rate => ( -->
+                        <div class="flex items-center justify-between p-2 bg-white rounded border" data-mock="true">
+                            <span class="text-sm font-medium" data-bind="rate.pair">USD/TRY</span>
+                            <span class="text-sm text-gray-600" data-bind="rate.value">32.1500</span>
+                        </div>
+                        <!-- @END_MAP )) -->
+                    </div>
+                </div>
+                <div class="flex items-center justify-end space-x-3 pt-4">
+                    <button class="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors" data-event="click:closeCurrencyModal">
+                        İptal
+                    </button>
+                    <button class="px-4 py-2 bg-primary text-white rounded-md hover:bg-blue-700 transition-colors" data-event="click:saveCurrencyRates">
+                        Kaydet
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: CurrencyConverterModal -->
+
+    <!-- @COMPONENT: AddLetterModal -->
+    <div id="addLetterModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50" data-modal="addLetter">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-semibold text-gray-800">Yeni Teminat Mektubu Ekle</h3>
+                <button class="text-gray-400 hover:text-gray-600" data-event="click:closeAddLetterModal">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <form class="space-y-6" data-event="submit:saveLetter">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Mektup Veren Banka</label>
+                        <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="letter.bank" required>
+                            <option value="">Banka Seçiniz</option>
+                            <option value="turkiye-is-bankasi">Türkiye İş Bankası</option>
+                            <option value="garanti-bbva">Garanti BBVA</option>
+                            <option value="yapi-kredi">Yapı Kredi Bankası</option>
+                            <option value="akbank">Akbank</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Mektup Türü</label>
+                        <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="letter.type" required>
+                            <option value="">Tür Seçiniz</option>
+                            <option value="teminat">Teminat Mektubu</option>
+                            <option value="avans">Avans Teminat Mektubu</option>
+                            <option value="kesin-teminat">Kesin Teminat Mektubu</option>
+                            <option value="gecici-teminat">Geçici Teminat Mektubu</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Proje</label>
+                        <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="letter.project" required>
+                            <option value="">Proje Seçiniz</option>
+                            <option value="irak-petrol">Irak Petrol Projesi</option>
+                            <option value="turkiye-insaat">Türkiye İnşaat Projesi</option>
+                            <option value="katar-altyapi">Katar Altyapı Projesi</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Para Birimi</label>
+                        <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="letter.currency" required>
+                            <option value="TRY">TRY - Türk Lirası</option>
+                            <option value="USD">USD - Amerikan Doları</option>
+                            <option value="EUR">EUR - Euro</option>
+                            <option value="IQD">IQD - Irak Dinarı</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Proje Sözleşme Tutarı</label>
+                        <input type="number" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="letter.contractAmount" placeholder="0.00" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Mektup Tutarı (%)</label>
+                        <input type="number" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="letter.percentage" placeholder="5.00" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Komisyon Oranı (%)</label>
+                        <input type="number" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="letter.commissionRate" placeholder="1.50" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Mektup Alım Tarihi</label>
+                        <input type="date" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="letter.purchaseDate" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Mektup Tarihi</label>
+                        <input type="date" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="letter.letterDate" required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Durum</label>
+                        <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="letter.status" required>
+                            <option value="aktif">Aktif</option>
+                            <option value="beklemede">Beklemede</option>
+                            <option value="kapali">Kapalı</option>
+                            <option value="iptal">İptal</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
+                    <button type="button" class="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors" data-event="click:closeAddLetterModal">
+                        İptal
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-blue-700 transition-colors">
+                        Kaydet
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: AddLetterModal -->
+
+    <script>
+        // @STATE: activeTab:string = 'overview'
+        // @STATE: selectedCurrency:string = 'TRY'
+        // @STATE: isProjectsExpanded:boolean = true
+        // @STATE: isBanksExpanded:boolean = true
+
+        (function() {
+            // Tab switching functionality
+            const tabs = document.querySelectorAll('[data-tab]');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const targetTab = tab.getAttribute('data-tab');
+                    
+                    // Update active tab styling
+                    tabs.forEach(t => {
+                        t.classList.remove('border-primary', 'text-primary');
+                        t.classList.add('border-transparent', 'text-gray-500');
+                    });
+                    tab.classList.remove('border-transparent', 'text-gray-500');
+                    tab.classList.add('border-primary', 'text-primary');
+                    
+                    // Show/hide tab contents
+                    tabContents.forEach(content => {
+                        content.classList.add('hidden');
+                    });
+                    document.getElementById(targetTab + 'Tab').classList.remove('hidden');
+                });
+            });
+
+            // Modal functionality
+            const currencyModal = document.getElementById('currencyModal');
+            const addLetterModal = document.getElementById('addLetterModal');
+
+            document.querySelector('[data-event="click:openCurrencyConverter"]').addEventListener('click', () => {
+                currencyModal.classList.remove('hidden');
+                currencyModal.classList.add('flex');
+            });
+
+            document.querySelector('[data-event="click:addNewLetter"]').addEventListener('click', () => {
+                addLetterModal.classList.remove('hidden');
+                addLetterModal.classList.add('flex');
+            });
+
+            document.querySelectorAll('[data-event="click:closeCurrencyModal"]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    currencyModal.classList.add('hidden');
+                    currencyModal.classList.remove('flex');
+                });
+            });
+
+            document.querySelectorAll('[data-event="click:closeAddLetterModal"]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    addLetterModal.classList.add('hidden');
+                    addLetterModal.classList.remove('flex');
+                });
+            });
+
+            // Sidebar toggle functionality
+            document.querySelector('[data-event="click:toggleProjects"]').addEventListener('click', () => {
+                const chevron = document.getElementById('projectsChevron');
+                const projectsList = document.getElementById('projectsList');
+                
+                if (projectsList.classList.contains('hidden')) {
+                    projectsList.classList.remove('hidden');
+                    chevron.classList.remove('fa-chevron-right');
+                    chevron.classList.add('fa-chevron-down');
+                } else {
+                    projectsList.classList.add('hidden');
+                    chevron.classList.remove('fa-chevron-down');
+                    chevron.classList.add('fa-chevron-right');
+                }
+            });
+
+            document.querySelector('[data-event="click:toggleBanks"]').addEventListener('click', () => {
+                const chevron = document.getElementById('banksChevron');
+                const banksList = document.getElementById('banksList');
+                
+                if (banksList.classList.contains('hidden')) {
+                    banksList.classList.remove('hidden');
+                    chevron.classList.remove('fa-chevron-right');
+                    chevron.classList.add('fa-chevron-down');
+                } else {
+                    banksList.classList.add('hidden');
+                    chevron.classList.remove('fa-chevron-down');
+                    chevron.classList.add('fa-chevron-right');
+                }
+            });
+
+            // Initialize Charts
+            function initializeCharts() {
+                // Letter Type Distribution Chart
+                const letterTypeCtx = document.getElementById('letterTypeChart').getContext('2d');
+                new Chart(letterTypeCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Teminat Mektubu', 'Avans Teminat', 'Kesin Teminat', 'Geçici Teminat'],
+                        datasets: [{
+                            data: [45, 25, 20, 10],
+                            backgroundColor: ['#1976D2', '#FF9800', '#4CAF50', '#F44336'],
+                            borderWidth: 2,
+                            borderColor: '#ffffff'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+
+                // Bank Distribution Chart
+                const bankCtx = document.getElementById('bankDistributionChart').getContext('2d');
+                new Chart(bankCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Türkiye İş Bankası', 'Garanti BBVA', 'Yapı Kredi', 'Akbank'],
+                        datasets: [{
+                            label: 'Mektup Sayısı',
+                            data: [15, 10, 7, 5],
+                            backgroundColor: '#1976D2',
+                            borderColor: '#1565C0',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+
+                // Monthly Trend Chart
+                const monthlyTrendCtx = document.getElementById('monthlyTrendChart').getContext('2d');
+                new Chart(monthlyTrendCtx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran'],
+                        datasets: [{
+                            label: 'Toplam Tutar (Milyon ₺)',
+                            data: [1.2, 1.9, 2.3, 2.1, 2.8, 2.4],
+                            borderColor: '#1976D2',
+                            backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+
+                // Risk Analysis Chart
+                const riskCtx = document.getElementById('riskAnalysisChart').getContext('2d');
+                new Chart(riskCtx, {
+                    type: 'radar',
+                    data: {
+                        labels: ['Likidite', 'Kredi', 'Piyasa', 'Operasyonel', 'Ülke'],
+                        datasets: [{
+                            label: 'Risk Seviyesi',
+                            data: [65, 75, 60, 70, 80],
+                            borderColor: '#FF9800',
+                            backgroundColor: 'rgba(255, 152, 0, 0.2)',
+                            pointBackgroundColor: '#FF9800'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            r: {
+                                beginAtZero: true,
+                                max: 100
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Initialize Tabulator Table
+            function initializeTable() {
+                // TODO: Implement Tabulator table with all letter data fields
+                const tableData = [
+                    {
+                        id: 1,
+                        bank: "Türkiye İş Bankası",
+                        type: "Teminat Mektubu",
+                        project: "Irak Petrol Projesi",
+                        contractAmount: 2500000,
+                        percentage: 5,
+                        letterAmount: 125000,
+                        commissionRate: 1.5,
+                        purchaseDate: "2024-01-15",
+                        letterDate: "2024-01-20",
+                        status: "Aktif",
+                        currency: "IQD"
+                    }
+                    // More mock data would be added here
+                ];
+
+                // TODO: Initialize Tabulator with full functionality
+                console.log("Tabulator table initialization - mock data:", tableData);
+            }
+
+            // Initialize everything when DOM is loaded
+            document.addEventListener('DOMContentLoaded', () => {
+                initializeCharts();
+                initializeTable();
+            });
+
+            // TODO: Implement business logic for:
+            // - Currency conversion calculations
+            // - Data filtering and search
+            // - Export functionality (Excel, PDF, CSV)
+            // - Form validation and submission
+            // - API calls for data persistence
+            // - Real-time data updates
+            // - Advanced reporting features
+
+        })();
+    </script>
+</body>
+</html>

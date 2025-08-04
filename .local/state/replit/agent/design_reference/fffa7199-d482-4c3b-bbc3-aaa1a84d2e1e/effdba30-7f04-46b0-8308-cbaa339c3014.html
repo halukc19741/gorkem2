@@ -1,0 +1,899 @@
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kredi ve Teminat Mektubu Takip Sistemi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#1e40af',
+                        secondary: '#64748b',
+                        accent: '#10b981',
+                        warning: '#f59e0b',
+                        danger: '#ef4444',
+                    }
+                }
+            }
+        };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator.min.css" rel="stylesheet">
+    <script type="text/javascript" src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        .tabulator {
+            border-radius: 8px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        }
+        .tabulator-header {
+            background-color: #f8fafc;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 font-inter">
+    <!-- @COMPONENT: Sidebar Navigation -->
+    <div class="flex min-h-screen">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white shadow-lg">
+            <div class="p-6 border-b border-gray-200">
+                <h1 class="text-xl font-bold text-gray-800">Finansal Takip</h1>
+                <p class="text-sm text-gray-600">Kredi & Teminat Sistemi</p>
+            </div>
+            
+            <nav class="mt-6">
+                <div class="px-6 mb-6">
+                    <button id="dashboardTab" class="nav-item active w-full flex items-center px-4 py-2 text-left text-primary bg-blue-50 rounded-lg mb-2">
+                        <i class="fas fa-chart-pie mr-3"></i>
+                        Dashboard
+                    </button>
+                    <button id="lettersTab" class="nav-item w-full flex items-center px-4 py-2 text-left text-gray-600 hover:bg-gray-50 rounded-lg mb-2">
+                        <i class="fas fa-file-contract mr-3"></i>
+                        Mektup Takibi
+                    </button>
+                    <button id="currencyTab" class="nav-item w-full flex items-center px-4 py-2 text-left text-gray-600 hover:bg-gray-50 rounded-lg mb-2">
+                        <i class="fas fa-exchange-alt mr-3"></i>
+                        Kur Çevirici
+                    </button>
+                    <button id="reportsTab" class="nav-item w-full flex items-center px-4 py-2 text-left text-gray-600 hover:bg-gray-50 rounded-lg mb-2">
+                        <i class="fas fa-chart-bar mr-3"></i>
+                        Raporlar
+                    </button>
+                    <button id="paymentsTab" class="nav-item w-full flex items-center px-4 py-2 text-left text-gray-600 hover:bg-gray-50 rounded-lg mb-2">
+                        <i class="fas fa-calendar-alt mr-3"></i>
+                        Ödeme Takvimi
+                    </button>
+                </div>
+            </nav>
+        </aside>
+        <!-- @END_COMPONENT: Sidebar Navigation -->
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-y-auto">
+            <!-- @COMPONENT: Dashboard Section -->
+            <div id="dashboardSection" class="tab-content">
+                <!-- Header -->
+                <header class="bg-white shadow-sm border-b border-gray-200 p-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800">Dashboard</h2>
+                            <p class="text-gray-600">Genel durum ve önemli metrikler</p>
+                        </div>
+                        <div class="flex space-x-3">
+                            <select class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <option>TRY - Türk Lirası</option>
+                                <option>USD - Amerikan Doları</option>
+                                <option>EUR - Euro</option>
+                                <option>GBP - İngiliz Sterlini</option>
+                            </select>
+                            <button class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-sync-alt mr-2"></i>Güncelle
+                            </button>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Stats Cards -->
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Toplam Mektup Sayısı</p>
+                                    <p class="text-3xl font-bold text-gray-900" data-bind="totalLetters">47</p>
+                                </div>
+                                <div class="p-3 bg-blue-100 rounded-full">
+                                    <i class="fas fa-file-contract text-xl text-primary"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Toplam Tutar</p>
+                                    <p class="text-3xl font-bold text-gray-900" data-bind="totalAmount">₺8,245,000</p>
+                                </div>
+                                <div class="p-3 bg-green-100 rounded-full">
+                                    <i class="fas fa-lira-sign text-xl text-accent"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Aktif Bankalar</p>
+                                    <p class="text-3xl font-bold text-gray-900" data-bind="activeBanks">12</p>
+                                </div>
+                                <div class="p-3 bg-purple-100 rounded-full">
+                                    <i class="fas fa-university text-xl text-purple-600"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Bu Ay Vadesi Dolacak</p>
+                                    <p class="text-3xl font-bold text-warning" data-bind="expiringThisMonth">6</p>
+                                </div>
+                                <div class="p-3 bg-amber-100 rounded-full">
+                                    <i class="fas fa-exclamation-triangle text-xl text-warning"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Section -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Mektup Türü Dağılımı</h3>
+                            <div class="chart-container">
+                                <canvas id="letterTypeChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Banka Bazında Dağılım</h3>
+                            <div class="chart-container">
+                                <canvas id="bankDistributionChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: Dashboard Section -->
+
+            <!-- @COMPONENT: Letters Management Section -->
+            <div id="lettersSection" class="tab-content" style="display: none;">
+                <header class="bg-white shadow-sm border-b border-gray-200 p-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800">Mektup Takibi</h2>
+                            <p class="text-gray-600">Kredi ve teminat mektuplarını yönetin</p>
+                        </div>
+                        <div class="flex space-x-3">
+                            <button id="addLetterBtn" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-plus mr-2"></i>Yeni Mektup
+                            </button>
+                            <button class="px-4 py-2 bg-accent text-white rounded-lg hover:bg-green-700 transition-colors">
+                                <i class="fas fa-file-excel mr-2"></i>Excel'e Aktar
+                            </button>
+                            <button class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                                <i class="fas fa-file-pdf mr-2"></i>PDF'e Aktar
+                            </button>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="p-6">
+                    <!-- Filter Section -->
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Mektup Türü</label>
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <option>Tümü</option>
+                                    <option>Kredi Mektubu</option>
+                                    <option>Teminat Mektubu</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Banka</label>
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <option>Tümü</option>
+                                    <option>Ziraat Bankası</option>
+                                    <option>İş Bankası</option>
+                                    <option>Garanti BBVA</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Proje</label>
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <option>Tümü</option>
+                                    <option>Proje A</option>
+                                    <option>Proje B</option>
+                                    <option>Proje C</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Durum</label>
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <option>Tümü</option>
+                                    <option>Aktif</option>
+                                    <option>Pasif</option>
+                                    <option>Süresi Dolmuş</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Data Table -->
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                        <div id="lettersTable"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: Letters Management Section -->
+
+            <!-- @COMPONENT: Currency Converter Section -->
+            <div id="currencySection" class="tab-content" style="display: none;">
+                <header class="bg-white shadow-sm border-b border-gray-200 p-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800">Kur Çevirici</h2>
+                            <p class="text-gray-600">Para birimlerini çevirin ve kurları yönetin</p>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="p-6">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Currency Converter -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Kur Çevirici</h3>
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Çevrilecek Tutar</label>
+                                    <input type="number" id="convertAmount" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="0.00">
+                                </div>
+                                
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Kaynak Para Birimi</label>
+                                        <select id="fromCurrency" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                            <option value="TRY">TRY - Türk Lirası</option>
+                                            <option value="USD">USD - Amerikan Doları</option>
+                                            <option value="EUR">EUR - Euro</option>
+                                            <option value="GBP">GBP - İngiliz Sterlini</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Hedef Para Birimi</label>
+                                        <select id="toCurrency" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                            <option value="USD">USD - Amerikan Doları</option>
+                                            <option value="TRY">TRY - Türk Lirası</option>
+                                            <option value="EUR">EUR - Euro</option>
+                                            <option value="GBP">GBP - İngiliz Sterlini</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <button id="convertBtn" class="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                    <i class="fas fa-exchange-alt mr-2"></i>Çevir
+                                </button>
+                                
+                                <div class="p-4 bg-gray-50 rounded-lg">
+                                    <p class="text-sm text-gray-600">Çevrilmiş Tutar:</p>
+                                    <p id="convertedAmount" class="text-2xl font-bold text-gray-900">-</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Exchange Rates Management -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Kur Katsayıları</h3>
+                            
+                            <div class="space-y-4">
+                                <div class="grid grid-cols-3 gap-2 text-sm font-medium text-gray-700">
+                                    <div>Para Birimi</div>
+                                    <div>Alış Kuru</div>
+                                    <div>Satış Kuru</div>
+                                </div>
+                                
+                                <!-- @MAP: exchangeRates.map(rate => ( -->
+                                <div class="grid grid-cols-3 gap-2 items-center py-2 border-b border-gray-100">
+                                    <div class="font-medium">USD/TRY</div>
+                                    <input type="number" class="px-2 py-1 border border-gray-300 rounded text-sm" value="30.25" step="0.01">
+                                    <input type="number" class="px-2 py-1 border border-gray-300 rounded text-sm" value="30.35" step="0.01">
+                                </div>
+                                <div class="grid grid-cols-3 gap-2 items-center py-2 border-b border-gray-100">
+                                    <div class="font-medium">EUR/TRY</div>
+                                    <input type="number" class="px-2 py-1 border border-gray-300 rounded text-sm" value="32.80" step="0.01">
+                                    <input type="number" class="px-2 py-1 border border-gray-300 rounded text-sm" value="32.95" step="0.01">
+                                </div>
+                                <div class="grid grid-cols-3 gap-2 items-center py-2 border-b border-gray-100">
+                                    <div class="font-medium">GBP/TRY</div>
+                                    <input type="number" class="px-2 py-1 border border-gray-300 rounded text-sm" value="38.15" step="0.01">
+                                    <input type="number" class="px-2 py-1 border border-gray-300 rounded text-sm" value="38.35" step="0.01">
+                                </div>
+                                <!-- @END_MAP -->
+                                
+                                <button class="w-full px-4 py-2 bg-accent text-white rounded-lg hover:bg-green-700 transition-colors">
+                                    <i class="fas fa-save mr-2"></i>Kurları Kaydet
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: Currency Converter Section -->
+
+            <!-- @COMPONENT: Reports Section -->
+            <div id="reportsSection" class="tab-content" style="display: none;">
+                <header class="bg-white shadow-sm border-b border-gray-200 p-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800">Raporlar</h2>
+                            <p class="text-gray-600">Detaylı analiz ve raporlama</p>
+                        </div>
+                        <div class="flex space-x-3">
+                            <button class="px-4 py-2 bg-accent text-white rounded-lg hover:bg-green-700 transition-colors">
+                                <i class="fas fa-file-excel mr-2"></i>Raporu Excel'e Aktar
+                            </button>
+                            <button class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                                <i class="fas fa-file-pdf mr-2"></i>Raporu PDF'e Aktar
+                            </button>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="p-6">
+                    <!-- Report Filters -->
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Rapor Filtreleri</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Tarih Aralığı</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input type="date" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <input type="date" class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Rapor Türü</label>
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <option>Genel Özet</option>
+                                    <option>Banka Bazında Analiz</option>
+                                    <option>Proje Bazında Analiz</option>
+                                    <option>Vadeli Ödemeler</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Para Birimi</label>
+                                <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <option>TRY - Türk Lirası</option>
+                                    <option>USD - Amerikan Doları</option>
+                                    <option>EUR - Euro</option>
+                                    <option>Tümü</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <button class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-search mr-2"></i>Rapor Oluştur
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Charts Grid -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Aylık Mektup Hacmi</h3>
+                            <div class="chart-container">
+                                <canvas id="monthlyVolumeChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Risk Dağılımı</h3>
+                            <div class="chart-container">
+                                <canvas id="riskDistributionChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Summary Table -->
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-800">Özet Tablo</h3>
+                        </div>
+                        <div id="summaryTable"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: Reports Section -->
+
+            <!-- @COMPONENT: Payment Calendar Section -->
+            <div id="paymentsSection" class="tab-content" style="display: none;">
+                <header class="bg-white shadow-sm border-b border-gray-200 p-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-800">Ödeme Takvimi</h2>
+                            <p class="text-gray-600">Gelecek ödemeler ve vade takibi</p>
+                        </div>
+                        <div class="flex space-x-3">
+                            <button class="px-4 py-2 bg-warning text-white rounded-lg hover:bg-yellow-600 transition-colors">
+                                <i class="fas fa-bell mr-2"></i>Hatırlatıcılar
+                            </button>
+                            <button class="px-4 py-2 bg-accent text-white rounded-lg hover:bg-green-700 transition-colors">
+                                <i class="fas fa-file-excel mr-2"></i>Excel'e Aktar
+                            </button>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="p-6">
+                    <!-- Quick Stats -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Bu Hafta Vadesi Dolacak</p>
+                                    <p class="text-2xl font-bold text-warning">3</p>
+                                </div>
+                                <i class="fas fa-calendar-week text-2xl text-warning"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Bu Ay Vadesi Dolacak</p>
+                                    <p class="text-2xl font-bold text-danger">6</p>
+                                </div>
+                                <i class="fas fa-calendar-alt text-2xl text-danger"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-600">Toplam Ödeme Tutarı</p>
+                                    <p class="text-2xl font-bold text-gray-900">₺2,450,000</p>
+                                </div>
+                                <i class="fas fa-lira-sign text-2xl text-accent"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Schedule Table -->
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-800">Ödeme Takvimi</h3>
+                        </div>
+                        <div id="paymentScheduleTable"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: Payment Calendar Section -->
+        </main>
+    </div>
+
+    <!-- @COMPONENT: Add Letter Modal -->
+    <div id="addLetterModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-screen overflow-y-auto">
+                <div class="p-6 border-b border-gray-200">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xl font-semibold text-gray-800">Yeni Mektup Ekle</h3>
+                        <button id="closeModalBtn" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <form class="p-6 space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Mektup Veren Banka</label>
+                            <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="bankName">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Mektup Türü</label>
+                            <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <option>Kredi Mektubu</option>
+                                <option>Teminat Mektubu</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Proje/Sözleşme Tutarı IQD</label>
+                        <input type="number" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="contractAmount">
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Mektup Tutarı %5</label>
+                            <input type="number" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="letterPercentage">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Mektup Komisyon Oranı</label>
+                            <input type="number" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="commissionRate">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Mektup Alım Tarihi</label>
+                            <input type="date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="issueDate">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Mektup Tarihi</label>
+                            <input type="date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="letterDate">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Durum</label>
+                        <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option>Aktif</option>
+                            <option>Pasif</option>
+                            <option>İptal</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 pt-4">
+                        <button type="button" id="cancelBtn" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                            İptal
+                        </button>
+                        <button type="submit" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-save mr-2"></i>Kaydet
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: Add Letter Modal -->
+
+    <script>
+        (function() {
+            // Tab Navigation
+            const tabButtons = document.querySelectorAll('.nav-item');
+            const tabContents = document.querySelectorAll('.tab-content');
+            
+            function showTab(targetId) {
+                // Hide all tab contents
+                tabContents.forEach(content => {
+                    content.style.display = 'none';
+                });
+                
+                // Remove active class from all buttons
+                tabButtons.forEach(btn => {
+                    btn.classList.remove('active', 'text-primary', 'bg-blue-50');
+                    btn.classList.add('text-gray-600');
+                });
+                
+                // Show target content
+                const targetContent = document.getElementById(targetId);
+                if (targetContent) {
+                    targetContent.style.display = 'block';
+                }
+                
+                // Add active class to clicked button
+                const activeBtn = document.getElementById(targetId.replace('Section', 'Tab'));
+                if (activeBtn) {
+                    activeBtn.classList.add('active', 'text-primary', 'bg-blue-50');
+                    activeBtn.classList.remove('text-gray-600');
+                }
+            }
+            
+            // Tab click handlers
+            document.getElementById('dashboardTab').addEventListener('click', () => showTab('dashboardSection'));
+            document.getElementById('lettersTab').addEventListener('click', () => showTab('lettersSection'));
+            document.getElementById('currencyTab').addEventListener('click', () => showTab('currencySection'));
+            document.getElementById('reportsTab').addEventListener('click', () => showTab('reportsSection'));
+            document.getElementById('paymentsTab').addEventListener('click', () => showTab('paymentsSection'));
+            
+            // Modal handlers
+            const addLetterModal = document.getElementById('addLetterModal');
+            const addLetterBtn = document.getElementById('addLetterBtn');
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
+            
+            if (addLetterBtn) {
+                addLetterBtn.addEventListener('click', () => {
+                    addLetterModal.classList.remove('hidden');
+                });
+            }
+            
+            if (closeModalBtn) {
+                closeModalBtn.addEventListener('click', () => {
+                    addLetterModal.classList.add('hidden');
+                });
+            }
+            
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', () => {
+                    addLetterModal.classList.add('hidden');
+                });
+            }
+            
+            // Initialize Charts
+            function initializeCharts() {
+                // Letter Type Distribution Chart
+                const letterTypeCtx = document.getElementById('letterTypeChart');
+                if (letterTypeCtx) {
+                    new Chart(letterTypeCtx, {
+                        type: 'pie',
+                        data: {
+                            labels: ['Kredi Mektupları', 'Teminat Mektupları'],
+                            datasets: [{
+                                data: [65, 35],
+                                backgroundColor: ['#1e40af', '#10b981'],
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom'
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                // Bank Distribution Chart
+                const bankDistCtx = document.getElementById('bankDistributionChart');
+                if (bankDistCtx) {
+                    new Chart(bankDistCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Ziraat Bankası', 'İş Bankası', 'Garanti BBVA', 'Diğer'],
+                            datasets: [{
+                                data: [30, 25, 20, 25],
+                                backgroundColor: ['#1e40af', '#10b981', '#f59e0b', '#64748b'],
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom'
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                // Monthly Volume Chart
+                const monthlyVolumeCtx = document.getElementById('monthlyVolumeChart');
+                if (monthlyVolumeCtx) {
+                    new Chart(monthlyVolumeCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz'],
+                            datasets: [{
+                                label: 'Tutar (Milyon TL)',
+                                data: [2.5, 3.2, 2.8, 4.1, 3.7, 4.5],
+                                backgroundColor: '#1e40af',
+                                borderRadius: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true
+                                }
+                            }
+                        }
+                    });
+                }
+                
+                // Risk Distribution Chart
+                const riskDistCtx = document.getElementById('riskDistributionChart');
+                if (riskDistCtx) {
+                    new Chart(riskDistCtx, {
+                        type: 'radar',
+                        data: {
+                            labels: ['Düşük Risk', 'Orta Risk', 'Yüksek Risk', 'Kritik Risk'],
+                            datasets: [{
+                                label: 'Risk Dağılımı',
+                                data: [85, 60, 30, 15],
+                                backgroundColor: 'rgba(30, 64, 175, 0.2)',
+                                borderColor: '#1e40af',
+                                borderWidth: 2,
+                                pointBackgroundColor: '#1e40af'
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                r: {
+                                    beginAtZero: true,
+                                    max: 100
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+            
+            // Initialize Tabulator Tables
+            function initializeTables() {
+                // Letters Table
+                if (document.getElementById('lettersTable')) {
+                    new Tabulator("#lettersTable", {
+                        height: "500px",
+                        layout: "fitColumns",
+                        placeholder: "Veri yükleniyor...",
+                        columns: [
+                            {title: "Mektup No", field: "letterNo", width: 120, editor: "input"},
+                            {title: "Banka", field: "bank", width: 150, editor: "input"},
+                            {title: "Tür", field: "type", width: 120, editor: "select", editorParams: {values: ["Kredi", "Teminat"]}},
+                            {title: "Tutar", field: "amount", width: 120, editor: "number", formatter: "money"},
+                            {title: "Para Birimi", field: "currency", width: 100, editor: "select", editorParams: {values: ["TRY", "USD", "EUR"]}},
+                            {title: "Proje", field: "project", width: 150, editor: "input"},
+                            {title: "Vade Tarihi", field: "dueDate", width: 120, editor: "date"},
+                            {title: "Durum", field: "status", width: 100, editor: "select", editorParams: {values: ["Aktif", "Pasif", "İptal"]}},
+                            {title: "İşlemler", width: 120, formatter: function() {
+                                return '<button class="px-2 py-1 bg-blue-500 text-white rounded text-xs mr-1">Düzenle</button><button class="px-2 py-1 bg-red-500 text-white rounded text-xs">Sil</button>';
+                            }}
+                        ],
+                        data: [
+                            // TODO: Replace with actual data from API
+                            {letterNo: "KM-2024-001", bank: "Ziraat Bankası", type: "Kredi", amount: 250000, currency: "TRY", project: "Proje A", dueDate: "2024-06-15", status: "Aktif"},
+                            {letterNo: "TM-2024-002", bank: "İş Bankası", type: "Teminat", amount: 180000, currency: "USD", project: "Proje B", dueDate: "2024-07-20", status: "Aktif"},
+                            {letterNo: "KM-2024-003", bank: "Garanti BBVA", type: "Kredi", amount: 320000, currency: "EUR", project: "Proje C", dueDate: "2024-08-10", status: "Pasif"}
+                        ]
+                    });
+                }
+                
+                // Summary Table
+                if (document.getElementById('summaryTable')) {
+                    new Tabulator("#summaryTable", {
+                        height: "400px",
+                        layout: "fitColumns",
+                        columns: [
+                            {title: "Kategori", field: "category", width: 150},
+                            {title: "Adet", field: "count", width: 100},
+                            {title: "Toplam Tutar (TRY)", field: "totalTRY", width: 150, formatter: "money"},
+                            {title: "Toplam Tutar (USD)", field: "totalUSD", width: 150, formatter: "money"},
+                            {title: "Ortalama Tutar", field: "average", width: 150, formatter: "money"},
+                            {title: "Yüzde", field: "percentage", width: 100, formatter: function(cell) {
+                                return cell.getValue() + "%";
+                            }}
+                        ],
+                        data: [
+                            // TODO: Replace with actual summary data
+                            {category: "Kredi Mektupları", count: 31, totalTRY: 5420000, totalUSD: 179000, average: 174838, percentage: 65.7},
+                            {category: "Teminat Mektupları", count: 16, totalTRY: 2825000, totalUSD: 93500, average: 176562, percentage: 34.3},
+                            {category: "Bu Ay Vadesi Dolacak", count: 6, totalTRY: 980000, totalUSD: 32400, average: 163333, percentage: 12.8},
+                            {category: "Risk Altında", count: 3, totalTRY: 450000, totalUSD: 14900, average: 150000, percentage: 6.4}
+                        ]
+                    });
+                }
+                
+                // Payment Schedule Table
+                if (document.getElementById('paymentScheduleTable')) {
+                    new Tabulator("#paymentScheduleTable", {
+                        height: "500px",
+                        layout: "fitColumns",
+                        columns: [
+                            {title: "Mektup No", field: "letterNo", width: 120},
+                            {title: "Banka", field: "bank", width: 150},
+                            {title: "Proje", field: "project", width: 150},
+                            {title: "Vade Tarihi", field: "dueDate", width: 120, sorter: "date"},
+                            {title: "Ödeme Tutarı", field: "amount", width: 130, formatter: "money"},
+                            {title: "Para Birimi", field: "currency", width: 100},
+                            {title: "Kalan Gün", field: "daysLeft", width: 100, formatter: function(cell) {
+                                const days = cell.getValue();
+                                let color = days <= 7 ? 'text-red-600' : days <= 30 ? 'text-yellow-600' : 'text-green-600';
+                                return `<span class="${color} font-semibold">${days} gün</span>`;
+                            }},
+                            {title: "Durum", field: "status", width: 100, formatter: function(cell) {
+                                const status = cell.getValue();
+                                let color = status === 'Kritik' ? 'bg-red-100 text-red-800' : 
+                                           status === 'Yaklaşıyor' ? 'bg-yellow-100 text-yellow-800' : 
+                                           'bg-green-100 text-green-800';
+                                return `<span class="px-2 py-1 rounded-full text-xs ${color}">${status}</span>`;
+                            }}
+                        ],
+                        data: [
+                            // TODO: Replace with actual payment data
+                            {letterNo: "KM-2024-001", bank: "Ziraat Bankası", project: "Proje A", dueDate: "2024-02-15", amount: 25000, currency: "TRY", daysLeft: 5, status: "Kritik"},
+                            {letterNo: "TM-2024-002", bank: "İş Bankası", project: "Proje B", dueDate: "2024-02-28", amount: 18000, currency: "USD", daysLeft: 18, status: "Yaklaşıyor"},
+                            {letterNo: "KM-2024-003", bank: "Garanti BBVA", project: "Proje C", dueDate: "2024-03-10", amount: 32000, currency: "EUR", daysLeft: 28, status: "Normal"}
+                        ]
+                    });
+                }
+            }
+            
+            // Currency Converter
+            function setupCurrencyConverter() {
+                const convertBtn = document.getElementById('convertBtn');
+                const convertAmount = document.getElementById('convertAmount');
+                const fromCurrency = document.getElementById('fromCurrency');
+                const toCurrency = document.getElementById('toCurrency');
+                const convertedAmount = document.getElementById('convertedAmount');
+                
+                // Sample exchange rates - TODO: Replace with real API data
+                const exchangeRates = {
+                    'TRY': {'USD': 0.033, 'EUR': 0.0305, 'GBP': 0.026, 'TRY': 1},
+                    'USD': {'TRY': 30.25, 'EUR': 0.92, 'GBP': 0.79, 'USD': 1},
+                    'EUR': {'TRY': 32.80, 'USD': 1.09, 'GBP': 0.86, 'EUR': 1},
+                    'GBP': {'TRY': 38.15, 'USD': 1.27, 'EUR': 1.16, 'GBP': 1}
+                };
+                
+                if (convertBtn) {
+                    convertBtn.addEventListener('click', function() {
+                        const amount = parseFloat(convertAmount.value) || 0;
+                        const from = fromCurrency.value;
+                        const to = toCurrency.value;
+                        
+                        if (amount > 0 && exchangeRates[from] && exchangeRates[from][to]) {
+                            const rate = exchangeRates[from][to];
+                            const result = amount * rate;
+                            convertedAmount.textContent = `${result.toLocaleString('tr-TR', {
+                                style: 'currency',
+                                currency: to,
+                                minimumFractionDigits: 2
+                            })}`;
+                        } else {
+                            convertedAmount.textContent = 'Geçersiz değer';
+                        }
+                    });
+                }
+            }
+            
+            // Initialize everything when DOM is loaded
+            document.addEventListener('DOMContentLoaded', function() {
+                initializeCharts();
+                initializeTables();
+                setupCurrencyConverter();
+            });
+            
+            // TODO: Implement business logic for:
+            // - API calls for data loading and saving
+            // - Real-time exchange rate updates
+            // - Form validation and submission
+            // - Export functionality (Excel/PDF)
+            // - Advanced filtering and search
+            // - Notification system for due dates
+            // - User authentication and permissions
+            // - Database operations (MySQL/MariaDB)
+            // - Email notifications for critical dates
+            // - Backup and restore functionality
+        })();
+    </script>
+</body>
+</html>

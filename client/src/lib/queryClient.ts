@@ -2,8 +2,14 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    let errorMessage;
+    try {
+      const errorData = await res.json();
+      errorMessage = errorData.message || res.statusText;
+    } catch {
+      errorMessage = await res.text() || res.statusText;
+    }
+    throw new Error(`HTTP ${res.status}: ${errorMessage}`);
   }
 }
 
@@ -12,15 +18,29 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(url, {
-    method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
-    credentials: "include",
-  });
+  const baseURL = 'http://localhost:5000'; // API sunucusunun adresi
+  try {
+    console.log(`API Request: ${method} ${baseURL}${url}`);
+    const res = await fetch(`${baseURL}${url}`, {
+      method,
+      headers: {
+        ...(data ? { "Content-Type": "application/json" } : {}),
+      },
+      body: data ? JSON.stringify(data) : undefined,
+      credentials: "include",
+    });
 
-  await throwIfResNotOk(res);
-  return res;
+    console.log(`API Response Status: ${res.status}`);
+    await throwIfResNotOk(res);
+    return res;
+  } catch (error) {
+    console.error('API Request Error:', {
+      method,
+      url: `${baseURL}${url}`,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    });
+    throw error;
+  }
 }
 
 type UnauthorizedBehavior = "returnNull" | "throw";
