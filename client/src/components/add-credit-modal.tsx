@@ -303,7 +303,11 @@ export default function AddCreditModal({ open, onOpenChange }: AddCreditModalPro
                     <Textarea
                       placeholder="Kredi ile ilgili notlar..."
                       className="resize-none"
-                      {...field}
+                      value={field.value || ""}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      name={field.name}
+                      ref={field.ref}
                     />
                   </FormControl>
                   <FormMessage />

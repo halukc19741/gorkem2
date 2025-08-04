@@ -3,9 +3,11 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ChevronDown, ChevronRight, Building2, FolderOpen, ArrowRightLeft } from "lucide-react";
+import { ChevronDown, ChevronRight, Building2, FolderOpen, ArrowRightLeft, Plus } from "lucide-react";
 import { useCurrency } from "@/hooks/use-currency";
 import type { Project, Bank } from "@shared/schema";
+import AddProjectModal from "./add-project-modal";
+import AddBankModal from "./add-bank-modal";
 
 interface SidebarProps {
   projects: Project[];
@@ -28,6 +30,8 @@ export default function Sidebar({
 }: SidebarProps) {
   const [isProjectsExpanded, setIsProjectsExpanded] = useState(true);
   const [isBanksExpanded, setIsBanksExpanded] = useState(true);
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [isBankModalOpen, setIsBankModalOpen] = useState(false);
   const { selectedCurrency, setSelectedCurrency, currencies } = useCurrency();
 
   const handleProjectChange = (projectId: string, checked: boolean) => {
@@ -90,17 +94,27 @@ export default function Sidebar({
             <FolderOpen className="inline w-4 h-4 mr-2" />
             Projeler
           </h3>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsProjectsExpanded(!isProjectsExpanded)}
-          >
-            {isProjectsExpanded ? (
-              <ChevronDown className="w-4 h-4" />
-            ) : (
-              <ChevronRight className="w-4 h-4" />
-            )}
-          </Button>
+          <div className="flex items-center space-x-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsProjectModalOpen(true)}
+              className="text-green-600 hover:text-green-700 hover:bg-green-50"
+            >
+              <Plus className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsProjectsExpanded(!isProjectsExpanded)}
+            >
+              {isProjectsExpanded ? (
+                <ChevronDown className="w-4 h-4" />
+              ) : (
+                <ChevronRight className="w-4 h-4" />
+              )}
+            </Button>
+          </div>
         </div>
         {isProjectsExpanded && (
           <div className="space-y-2">
@@ -139,17 +153,27 @@ export default function Sidebar({
             <Building2 className="inline w-4 h-4 mr-2" />
             Bankalar
           </h3>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsBanksExpanded(!isBanksExpanded)}
-          >
-            {isBanksExpanded ? (
-              <ChevronDown className="w-4 h-4" />
-            ) : (
-              <ChevronRight className="w-4 h-4" />
-            )}
-          </Button>
+          <div className="flex items-center space-x-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsBankModalOpen(true)}
+              className="text-green-600 hover:text-green-700 hover:bg-green-50"
+            >
+              <Plus className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsBanksExpanded(!isBanksExpanded)}
+            >
+              {isBanksExpanded ? (
+                <ChevronDown className="w-4 h-4" />
+              ) : (
+                <ChevronRight className="w-4 h-4" />
+              )}
+            </Button>
+          </div>
         </div>
         {isBanksExpanded && (
           <div className="space-y-2">
@@ -180,6 +204,16 @@ export default function Sidebar({
           </div>
         )}
       </div>
+
+      {/* Modals */}
+      <AddProjectModal 
+        open={isProjectModalOpen} 
+        onOpenChange={setIsProjectModalOpen} 
+      />
+      <AddBankModal 
+        open={isBankModalOpen} 
+        onOpenChange={setIsBankModalOpen} 
+      />
     </div>
   );
 }

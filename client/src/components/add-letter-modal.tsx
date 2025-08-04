@@ -128,7 +128,7 @@ export default function AddLetterModal({ open, onOpenChange }: AddLetterModalPro
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {banks?.map((bank: any) => (
+                        {Array.isArray(banks) && banks.map((bank: any) => (
                           <SelectItem key={bank.id} value={bank.id}>
                             {bank.name}
                           </SelectItem>
@@ -177,7 +177,7 @@ export default function AddLetterModal({ open, onOpenChange }: AddLetterModalPro
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {projects?.map((project: any) => (
+                        {Array.isArray(projects) && projects.map((project: any) => (
                           <SelectItem key={project.id} value={project.id}>
                             {project.name}
                           </SelectItem>
