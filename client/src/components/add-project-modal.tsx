@@ -60,7 +60,7 @@ export default function AddProjectModal({ open, onOpenChange }: AddProjectModalP
         startDate: new Date(data.startDate).toISOString(),
         endDate: data.endDate ? new Date(data.endDate).toISOString() : null,
       };
-      return apiRequest('/api/projects', 'POST', submitData);
+      return apiRequest('POST', '/api/projects', submitData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects'] });

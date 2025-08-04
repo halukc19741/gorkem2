@@ -52,7 +52,7 @@ export default function AddBankModal({ open, onOpenChange }: AddBankModalProps) 
 
   const mutation = useMutation({
     mutationFn: (data: FormData) => {
-      return apiRequest('/api/banks', 'POST', data);
+      return apiRequest('POST', '/api/banks', data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/banks'] });

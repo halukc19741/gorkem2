@@ -74,7 +74,7 @@ export default function AddCreditModal({ open, onOpenChange }: AddCreditModalPro
         creditDate: new Date(data.creditDate).toISOString(),
         maturityDate: new Date(data.maturityDate).toISOString(),
       };
-      return apiRequest('/api/credits', 'POST', submitData);
+      return apiRequest('POST', '/api/credits', submitData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/credits'] });
